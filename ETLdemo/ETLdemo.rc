@@ -1,0 +1,283 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "#define _AFX_NO_SPLITTER_RESOURCES\r\n"
+    "#define _AFX_NO_OLE_RESOURCES\r\n"
+    "#define _AFX_NO_TRACKER_RESOURCES\r\n"
+    "#define _AFX_NO_PROPERTY_RESOURCES\r\n"
+    "\r\n"
+    "#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)\r\n"
+    "#ifdef _WIN32\r\n"
+    "LANGUAGE 9, 1\r\n"
+    "#pragma code_page(1252)\r\n"
+    "#endif //_WIN32\r\n"
+    "#include ""res\\ETLdemo.rc2""  // non-Microsoft Visual C++ edited resources\r\n"
+    "#include ""afxres.rc""         // Standard components\r\n"
+    "#endif\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDR_MAINFRAME           ICON                    "res\\ETLdemo.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_ABOUTBOX DIALOG  0, 0, 235, 55
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "About ETLdemo"
+FONT 8, "MS Sans Serif"
+BEGIN
+    ICON            IDR_MAINFRAME,IDC_STATIC,11,17,20,20
+    LTEXT           "ETLdemo Version 1.0",IDC_STATIC,40,10,119,8,SS_NOPREFIX
+    LTEXT           "Copyright (C) 2003",IDC_STATIC,40,25,119,8
+    DEFPUSHBUTTON   "OK",IDOK,178,7,50,14,WS_GROUP
+END
+
+IDD_ETLDEMO_DIALOG DIALOGEX 0, 0, 320, 223
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | 
+    WS_SYSMENU
+EXSTYLE WS_EX_APPWINDOW
+CAPTION "ETL Demo"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    PUSHBUTTON      "Close",IDCANCEL,263,202,50,14
+    PUSHBUTTON      "Transform Now",IDC_TRANSFORM,134,202,100,14
+    EDITTEXT        IDC_CONNECT_STRING_FROM,6,19,292,12,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",IDC_BTN_SELECT_CONNECT_STRING_FROM,301,19,12,12
+    EDITTEXT        IDC_CONNECT_STRING_TO,6,45,292,12,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",IDC_BTN_SELECT_CONNECT_STRING_TO,301,45,12,12
+    LTEXT           "From:",IDC_STATIC,6,7,18,8
+    LTEXT           "To:",IDC_STATIC,6,35,12,8
+    CONTROL         "All",IDC_ALL_CUSTOMERS,"Button",BS_AUTORADIOBUTTON | 
+                    WS_GROUP,54,71,23,10
+    CONTROL         "Select",IDC_SELECT_CUSTOMERS,"Button",
+                    BS_AUTORADIOBUTTON,79,71,36,10
+    CONTROL         "Query",IDC_QUERY_CUSTOMERS,"Button",BS_AUTORADIOBUTTON,
+                    117,71,35,10
+    GROUPBOX        "Customers",IDC_STATIC,6,63,150,102,WS_GROUP
+    LISTBOX         IDC_LIST_CUSTOMERS,12,85,138,74,LBS_SORT | 
+                    LBS_OWNERDRAWFIXED | LBS_HASSTRINGS | 
+                    LBS_NOINTEGRALHEIGHT | LBS_EXTENDEDSEL | NOT WS_VISIBLE | 
+                    WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Clear Target",IDC_CLEAR_TARGET,6,202,100,14
+    LTEXT           "SELECT * FROM Customers WHERE",IDC_STATIC_CUSTOMERS,12,
+                    85,120,8,NOT WS_VISIBLE
+    EDITTEXT        IDC_EDIT_CUSTOMERS,12,94,138,65,ES_MULTILINE | 
+                    ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_WANTRETURN | NOT 
+                    WS_VISIBLE | WS_VSCROLL | WS_HSCROLL
+    CONTROL         "All",IDC_ALL_EMPLOYEES,"Button",BS_AUTORADIOBUTTON | 
+                    WS_GROUP,211,71,23,10
+    CONTROL         "Select",IDC_SELECT_EMPLOYEES,"Button",
+                    BS_AUTORADIOBUTTON,236,71,36,10
+    CONTROL         "Query",IDC_QUERY_EMPLOYEES,"Button",BS_AUTORADIOBUTTON,
+                    274,71,35,10
+    GROUPBOX        "Employees",IDC_STATIC,163,63,150,102,WS_GROUP
+    LISTBOX         IDC_LIST_EMPLOYEES,169,85,138,74,LBS_SORT | 
+                    LBS_OWNERDRAWFIXED | LBS_HASSTRINGS | 
+                    LBS_NOINTEGRALHEIGHT | LBS_EXTENDEDSEL | NOT WS_VISIBLE | 
+                    WS_VSCROLL | WS_TABSTOP
+    LTEXT           "SELECT * FROM Employees WHERE",IDC_STATIC_EMPLOYEES,169,
+                    85,120,8,NOT WS_VISIBLE
+    EDITTEXT        IDC_EDIT_EMPLOYEES,169,94,138,65,ES_MULTILINE | 
+                    ES_AUTOVSCROLL | ES_AUTOHSCROLL | ES_WANTRETURN | NOT 
+                    WS_VISIBLE | WS_VSCROLL | WS_HSCROLL
+    CONTROL         "Propagate Customers' OR Employees' Orders",
+                    IDC_CUSTOMERS_OR_EMPLOYEES_ORDERS,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,6,172,157,10
+    PUSHBUTTON      "Test",IDC_TEST,263,169,50,14,NOT WS_VISIBLE
+    CONTROL         "Fast Load if Available",IDC_ENABLE_FAST_LOAD,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,6,186,83,10
+END
+
+IDD_CopyDesign DIALOG  0, 0, 227, 26
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION
+CAPTION "Copying data..."
+FONT 8, "MS Sans Serif"
+BEGIN
+    CONTROL         "Progress1",IDC_PROGRESS1,"msctls_progress32",WS_BORDER,
+                    5,6,215,14
+END
+
+IDD_UI_CHOICE_PROMPT DIALOG  0, 0, 262, 75
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION
+CAPTION "Data merge prompt"
+FONT 8, "MS Sans Serif"
+BEGIN
+    CONTROL         "&Apply to all",IDC_APPLY_TO_ALL,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,37,50,10
+    PUSHBUTTON      "&Use Existing",IDC_USE_EXISTING,7,54,79,14
+    PUSHBUTTON      "&Create New",IDC_CREATE_NEW,91,54,79,14
+    PUSHBUTTON      "&Overwrite (Replace)",IDC_OVERWRITE,175,54,79,14
+    LTEXT           "",IDC_STATIC_TEXT,7,7,248,20
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,0,0,1
+ PRODUCTVERSION 1,0,0,1
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x4L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904B0"
+        BEGIN
+            VALUE "FileDescription", "ETLdemo MFC Application"
+            VALUE "FileVersion", "1, 0, 0, 1"
+            VALUE "InternalName", "ETLdemo"
+            VALUE "LegalCopyright", "Copyright (C) 2003"
+            VALUE "OriginalFilename", "ETLdemo.EXE"
+            VALUE "ProductName", "ETLdemo Application"
+            VALUE "ProductVersion", "1, 0, 0, 1"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO 
+BEGIN
+    IDD_ABOUTBOX, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 228
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 48
+    END
+
+    IDD_ETLDEMO_DIALOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 313
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 216
+    END
+
+    IDD_CopyDesign, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 220
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 19
+    END
+
+    IDD_UI_CHOICE_PROMPT, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 255
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 68
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE 
+BEGIN
+    IDS_ABOUTBOX            "&About ETLdemo..."
+END
+
+#endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+#define _AFX_NO_SPLITTER_RESOURCES
+#define _AFX_NO_OLE_RESOURCES
+#define _AFX_NO_TRACKER_RESOURCES
+#define _AFX_NO_PROPERTY_RESOURCES
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE 9, 1
+#pragma code_page(1252)
+#endif //_WIN32
+#include "res\ETLdemo.rc2"  // non-Microsoft Visual C++ edited resources
+#include "afxres.rc"         // Standard components
+#endif
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+
