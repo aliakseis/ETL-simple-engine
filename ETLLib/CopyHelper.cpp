@@ -63,11 +63,7 @@ It can be also used for data transformation.
 #include "TableHolder.h"
 #include "DBTable.h"
 
-#if (_MSC_VER < 1300)
-#define typename
-#endif
 #include <google/dense_hash_set>
-#undef typename
 
 #pragma warning(disable:4100)
 #include <boost/foreach.hpp>
@@ -804,9 +800,10 @@ BOOL CTblCopyHelper::GoDownstairs(CCopyIterator CopyIterator,
 			if(arrOutpSubstRec->size() > nPrevCount)
 			{
 				CSubstRecArrayPtr arrSelfSubstRec = new CSubstRecArray;
-				for(size_t i = nPrevCount, nPrevCount = arrOutpSubstRec->size();
-					 i < nPrevCount;
-					 i++)
+				//for(size_t i = nPrevCount, nPrevCount = arrOutpSubstRec->size();
+				//	 i < nPrevCount;
+				//	 i++)
+                for (size_t i = arrOutpSubstRec->size(); i-- > nPrevCount;)
 						arrSelfSubstRec->push_back((*arrOutpSubstRec)[i]);
 				CopyIterator.SetData(arrSelfSubstRec);
 				pTwinTables = pSelfLink;

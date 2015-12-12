@@ -7,9 +7,7 @@
 
 
 
-#if _MSC_VER > 1000
 #pragma once
-#endif // _MSC_VER > 1000
 
 
 #include "identity.h"
@@ -44,17 +42,6 @@ struct AtomDesc
 	DWORD	m_id;
 	LPCWSTR	m_name;
 };
-
-
-#if _ATL_VER < 0x0700
-class CDynAccessor: public CDynamicAccessor
-{
-public:
-	HRESULT BindColumns(IUnknown* pUnk);
-};
-#else
-typedef CDynamicAccessor CDynAccessor;
-#endif
 
 
 class ETLLIB_EXPORT CDBTable  
@@ -142,8 +129,7 @@ private:
 	bool m_bFieldsListed;
 
 	CComPtr<IUnknown> m_spFastLoad;
-	CDynAccessor m_cda;
-
+    CDynamicAccessor m_cda;
 };
 
 #endif // !defined(AFX_DBTABLE_H__BD32C68F_D3AE_11D6_9CE6_AEFF2E4B123A__INCLUDED_)

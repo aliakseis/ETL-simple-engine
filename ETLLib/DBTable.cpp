@@ -56,103 +56,6 @@ HRESULT SafeArrayZeroVector(SAFEARRAY * psa)
 }
 
 
-#if _ATL_VER < 0x0700
-
-HRESULT CDynAccessor::BindColumns(IUnknown* pUnk)
-{
-	ATLASSERT(pUnk != NULL);
-	CComPtr<IAccessor> spAccessor;
-	HRESULT hr = pUnk->QueryInterface(&spAccessor);
-	if (FAILED(hr))
-		return hr;
-
-	ULONG   nOffset = 0;
-
-	// If the user hasn't specifed the column information to bind by calling AddBindEntry then
-	// we get it ourselves
-	if (m_pColumnInfo == NULL)
-	{
-		CComPtr<IColumnsInfo> spColumnsInfo;
-		hr = pUnk->QueryInterface(&spColumnsInfo);
-		if (FAILED(hr))
-			return hr;
-
-		hr = spColumnsInfo->GetColumnInfo(&m_nColumns, &m_pColumnInfo, &m_pStringsBuffer);
-		if (FAILED(hr))
-			return hr;
-
-		m_bOverride = false;
-	}
-	else
-		m_bOverride = true;
-
-	std::vector<DBBINDING> bindings(m_nColumns);
-	DBBINDING* pCurrent = &bindings.front();
-
-	for (ULONG i = 0; i < m_nColumns; i++)
-	{
-		// If it's a BLOB or the column size is large enough for us to treat it as
-		// a BLOB then we also need to set up the DBOBJECT structure.
-		DBOBJECT*  pObject = NULL;
-		if (m_pColumnInfo[i].ulColumnSize > 1024 || m_pColumnInfo[i].wType == DBTYPE_IUNKNOWN)
-		{
-			ATLTRY(pObject = new DBOBJECT);
-			if (pObject == NULL)
-				return E_OUTOFMEMORY;
-			pObject->dwFlags = STGM_READ;
-			pObject->iid     = IID_ISequentialStream;
-			m_pColumnInfo[i].wType      = DBTYPE_IUNKNOWN;
-			m_pColumnInfo[i].ulColumnSize   = sizeof(IUnknown*);
-		}
-
-		// If column is of type STR or WSTR increase length by 1
-		// to accommodate the NULL terminator.
-		if (m_pColumnInfo[i].wType == DBTYPE_STR)
-				m_pColumnInfo[i].ulColumnSize += 1;
-		else if (m_pColumnInfo[i].wType == DBTYPE_WSTR)
-				m_pColumnInfo[i].ulColumnSize = sizeof(WCHAR) * (m_pColumnInfo[i].ulColumnSize + 1);
-
-		ULONG nLengthOffset = AddOffset(nOffset, m_pColumnInfo[i].ulColumnSize);
-		ULONG nStatusOffset = AddOffset(nLengthOffset, sizeof(ULONG));
-		Bind(pCurrent, m_pColumnInfo[i].iOrdinal, m_pColumnInfo[i].wType,
-			m_pColumnInfo[i].ulColumnSize, m_pColumnInfo[i].bPrecision, m_pColumnInfo[i].bScale,
-			DBPARAMIO_NOTPARAM, nOffset,
-			nLengthOffset, nStatusOffset, pObject);
-		pCurrent++;
-
-		// Note that, as we're not using this for anything else, we're using the
-		// pTypeInfo element to store the offset to our data.
-		m_pColumnInfo[i].pTypeInfo = (ITypeInfo*)nOffset;
-
-		nOffset = AddOffset(nStatusOffset, sizeof(DBSTATUS));
-	}
-	// Allocate the accessor memory if we haven't done so yet
-	if (m_pAccessorInfo == NULL)
-	{
-		hr = AllocateAccessorMemory(1); // We only have one accessor
-		if (FAILED(hr))
-		{
-			return hr;
-		}
-		m_pAccessorInfo->bAutoAccessor = TRUE;
-	}
-
-	// Allocate enough memory for the data buffer and tell the rowset
-	// Note that the rowset will free the memory in its destructor.
-	m_pBuffer = NULL;
-	ATLTRY(m_pBuffer = new BYTE[nOffset]);
-	if (m_pBuffer == NULL)
-	{
-		return E_OUTOFMEMORY;
-	}
-	hr = BindEntries( &bindings.front(), m_nColumns, &m_pAccessorInfo->hAccessor,
-			nOffset, spAccessor);
-
-	return hr;
-}
-
-#endif
-
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -269,8 +172,6 @@ bool CDBTable::HasUniqueFilter() const
 
 bool CDBTable::FindFirst(DWORD filter)
 {
-	long i;
-
 	if (m_dwFilter != filter)
 	{
 		wstring query(L"SELECT * FROM ");
@@ -316,7 +217,7 @@ bool CDBTable::FindFirst(DWORD filter)
 		m_pCFind->Prepared = true;
 
 		if (filter != 0 && filter < 0x00010000)
-			for (i = 0; i < GetAtomCount(); i++)
+			for (int i = 0; i < GetAtomCount(); i++)
 			{
 				DWORD id = GetAtomId(i);
 				if ((id & filter) == id)
@@ -365,7 +266,7 @@ bool CDBTable::FindFirst(DWORD filter)
 	}
 	else 
 	{
-		for (i = 0; i < GetAtomCount(); i++)
+		for (int i = 0; i < GetAtomCount(); i++)
 		{
 			DWORD id = GetAtomId(i);
 			if ((id & filter) == id)
@@ -462,9 +363,8 @@ void CDBTable::DoCopyDataFromTable(const CDBTable* pTable,
 		pstrPKName = GetColumnName(fltAutoNumber);
 	}
 
-	long i;
 	FieldsPtr fields(pOtherRecordset->Fields);
-	for (i = fields->Count; i--; )
+	for (long i = fields->Count; i--; )
 	{
 		FieldPtr item = fields->Item[i];
 		_bstr_t pstrItemName(item->GetName());
@@ -507,7 +407,6 @@ bool CDBTable::DeleteRecord()
 bool CDBTable::DeleteRecords(DWORD filter)
 {
 	bool result = true;
-	long i;
 
 	if (m_dwDeleteFilter != filter)
 	{
@@ -550,7 +449,7 @@ bool CDBTable::DeleteRecords(DWORD filter)
 	}
 	
 	std::vector<const _variant_t*> params;
-	for (i = 0; i < GetAtomCount(); i++)
+	for (int i = 0; i < GetAtomCount(); i++)
 	{
 		DWORD id = GetAtomId(i);
 		if ((id & filter) == id)
@@ -573,7 +472,7 @@ bool CDBTable::DeleteRecords(DWORD filter)
 			vsa.vt = VT_VARIANT | VT_ARRAY;
 
 			// Set the values for each element of the array
-   			for(i = params.size(); i--; )
+   			for(LONG i = params.size(); i--; )
 				CheckError(SafeArrayPutElement(V_ARRAY(&vsa), &i, (void*) params[i])); 
 		}
 		m_pCDelete->Execute(NULL, (VT_EMPTY != vsa.vt)? &vsa : NULL
@@ -602,8 +501,7 @@ bool CDBTable::WasModified() const
 		ASSERT(0); return false;
 	}
 
-	long i;
-	for (i = m_pRFind->Fields->Count; i--; )
+	for (long i = m_pRFind->Fields->Count; i--; )
 	{
 		FieldPtr item = m_pRFind->Fields->Item[i];
 		_bstr_t bstrItemName(item->GetName());
@@ -844,14 +742,17 @@ bool CDBTable::FastInsert()
 							ASSERT(0);
 							return false;
 						}
-						size_t ulLength = 2 * wcslen(V_BSTR(&val));
+						const size_t ulLength = sizeof(wchar_t) * wcslen(V_BSTR(&val));
 						if (ulLength >= m_cda.m_pColumnInfo[ulColumnOffset].ulColumnSize)
 						{
 							ASSERT(0);
 							return false;
 						}
 						VERIFY(m_cda.SetLength(ulColumn, ulLength));
-						wcscpy((LPWSTR) pDataBuffer, V_BSTR(&val));
+						wcscpy_s(
+                            (LPWSTR) pDataBuffer, 
+                            m_cda.m_pColumnInfo[ulColumnOffset].ulColumnSize / sizeof(wchar_t), 
+                            V_BSTR(&val));
 					}
 					continue;
 				case DBTYPE_STR:
@@ -863,14 +764,14 @@ bool CDBTable::FastInsert()
 						}
 						USES_CONVERSION;
 						LPCSTR pszVal = W2CA(V_BSTR(&val));
-						size_t ulLength = strlen(pszVal);
+						const size_t ulLength = strlen(pszVal);
 						if (ulLength >= m_cda.m_pColumnInfo[ulColumnOffset].ulColumnSize)
 						{
 							ASSERT(0);
 							return false;
 						}
 						VERIFY(m_cda.SetLength(ulColumn, ulLength));
-						strcpy((LPSTR) pDataBuffer, pszVal);
+						strcpy_s((LPSTR) pDataBuffer, m_cda.m_pColumnInfo[ulColumnOffset].ulColumnSize, pszVal);
 					}
 					continue;
 				case VT_UI1:

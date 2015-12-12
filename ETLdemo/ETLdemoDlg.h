@@ -4,9 +4,7 @@
 #if !defined(AFX_ETLDEMODLG_H__CE2A8647_57A6_11D7_9CE6_D43439106E1D__INCLUDED_)
 #define AFX_ETLDEMODLG_H__CE2A8647_57A6_11D7_9CE6_D43439106E1D__INCLUDED_
 
-#if _MSC_VER > 1000
 #pragma once
-#endif // _MSC_VER > 1000
 
 /////////////////////////////////////////////////////////////////////////////
 // CETLdemoDlg dialog

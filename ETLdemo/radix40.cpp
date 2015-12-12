@@ -99,7 +99,7 @@ int ascii_to_radix40(Radix40 *radix40_data, const RADIX40_CHAR *ascii_data, int 
 			j = HYPHEN ; /* make it a hyphen */
 			result = S_ILLEGAL; /* and remember that it was illegal */
 			}
-		radix40_data[current_word_index] += weights[cycle] * j;
+		radix40_data[current_word_index] += Radix40(weights[cycle] * j);
 		cycle = (cycle + 1) % 3;
 		}
 

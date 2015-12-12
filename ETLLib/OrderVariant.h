@@ -10,8 +10,6 @@
 #define ETLLIB_EXPORT __declspec(dllimport)
 #endif
 
-#define _countof(array) (sizeof(array)/sizeof(array[0]))
-
 
 class CTblCopyHelper;
 class CDBTable;
@@ -28,11 +26,7 @@ class CDBAttrubuteDesc;
 #pragma warning(pop)
 
 
-#if (_MSC_VER < 1300)
-#define typename
-#endif
 #include <google/dense_hash_map>
-#undef typename
 
 #pragma warning(disable:4097)
 

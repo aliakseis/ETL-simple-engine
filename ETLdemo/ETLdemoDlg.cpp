@@ -210,8 +210,7 @@ BOOL CETLdemoDlg::OnInitDialog()
 	if (pSysMenu != NULL)
 	{
 		CString strAboutMenu;
-		strAboutMenu.LoadString(IDS_ABOUTBOX);
-		if (!strAboutMenu.IsEmpty())
+		if (strAboutMenu.LoadString(IDS_ABOUTBOX) && !strAboutMenu.IsEmpty())
 		{
 			pSysMenu->AppendMenu(MF_SEPARATOR);
 			pSysMenu->AppendMenu(MF_STRING, IDM_ABOUTBOX, strAboutMenu);
@@ -284,7 +283,7 @@ void CETLdemoDlg::OnTransform()
 	if (DoTransform())
 	{
 		CString strBuf;
-		strBuf.Format("Stuff was copied successfully in %g seconds."
+		strBuf.Format(_T("Stuff was copied successfully in %g seconds.")
 			, (double)(clock() - start) / CLOCKS_PER_SEC);
 
 		MessageBox(strBuf);
@@ -369,7 +368,7 @@ void CETLdemoDlg::OnClearTarget()
 {
 	if (!m_connectStringTo.CompareNoCase(m_connectStringFrom))
 	{
-		MessageBox("Source and destination are the same", NULL, MB_OK | MB_ICONEXCLAMATION);
+		MessageBox(_T("Source and destination are the same"), NULL, MB_OK | MB_ICONEXCLAMATION);
 		return;
 	}
 	
@@ -487,7 +486,7 @@ void CETLdemoDlg::OnBnClickedTest()
 			return;
 	}
 	CString strBuf;
-	strBuf.Format("Stuff was tested successfully in %g seconds."
+	strBuf.Format(_T("Stuff was tested successfully in %g seconds.")
 		, (double)(clock() - start) / CLOCKS_PER_SEC);
 
 	MessageBox(strBuf);
@@ -503,17 +502,17 @@ bool CETLdemoDlg::DoTransform()
 
 	if (m_connectStringFrom.IsEmpty())
 	{
-		MessageBox("Source connection string is empty", NULL, MB_OK | MB_ICONEXCLAMATION);
+		MessageBox(_T("Source connection string is empty"), NULL, MB_OK | MB_ICONEXCLAMATION);
 		return false;
 	}
 	if (m_connectStringTo.IsEmpty())
 	{
-		MessageBox("Destination connection string is empty", NULL, MB_OK | MB_ICONEXCLAMATION);
+		MessageBox(_T("Destination connection string is empty"), NULL, MB_OK | MB_ICONEXCLAMATION);
 		return false;
 	}
 	if (!m_connectStringTo.CompareNoCase(m_connectStringFrom))
 	{
-		MessageBox("Source and destination are the same", NULL, MB_OK | MB_ICONEXCLAMATION);
+		MessageBox(_T("Source and destination are the same"), NULL, MB_OK | MB_ICONEXCLAMATION);
 		return false;
 	}
 

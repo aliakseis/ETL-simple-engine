@@ -5,9 +5,7 @@
 #if !defined(AFX_TABLEFACTORY_H__BD32C68D_D3AE_11D6_9CE6_AEFF2E4B123A__INCLUDED_)
 #define AFX_TABLEFACTORY_H__BD32C68D_D3AE_11D6_9CE6_AEFF2E4B123A__INCLUDED_
 
-#if _MSC_VER > 1000
 #pragma once
-#endif // _MSC_VER > 1000
 
 #pragma warning(disable:4100 4702)
 #include <map>
