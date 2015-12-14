@@ -22,6 +22,8 @@
 #include "TableHolder.h"
 #include "SharedComVariant.h"
 
+#include <memory>
+
 
 #ifdef ETLLIB_EXPORTS
 #define ETLLIB_EXPORT __declspec(dllexport)
@@ -122,7 +124,8 @@ private:
 
 	DWORD m_dwFilter;
 	DWORD m_dwDeleteFilter;
-	typedef std::map<std::wstring, CSharedComVariant> MapValues;
+
+	typedef std::map<std::wstring, SharedComVariant> MapValues;
 	MapValues m_mapValues;
 
 	bool m_bAddMode;

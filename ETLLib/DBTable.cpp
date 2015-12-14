@@ -48,11 +48,7 @@ HRESULT SafeArrayZeroVector(SAFEARRAY * psa)
 
 	memset(pData, 0, (iUBound - iLBound + 1) * nElemSize);
 
-	hr = SafeArrayUnaccessData(psa);
-	if(FAILED(hr))
-		return hr;
-
-	return S_OK;
+	return SafeArrayUnaccessData(psa);
 }
 
 
@@ -83,10 +79,8 @@ CDBTable::~CDBTable()
 
 void CDBTable::InitData()
 {
-	for (MapValues::iterator iter = m_mapValues.begin()
-	; iter != m_mapValues.end()
-	; ++iter)
-		iter->second = g_vNull;
+    for (auto& v : m_mapValues)
+        v.second = g_vNull;
 }
 
 void CDBTable::FreeStatements()
@@ -135,8 +129,8 @@ void CDBTable::SetIdentityValue(DWORD id, Identity value)
 		ASSERT(colName);
 		_variant_t buf;
 		value.Get(buf);
-		m_mapValues[colName].Attach(buf);
-	}
+        m_mapValues[colName] = std::move(buf); // attach
+    }
 }
 
 Identity CDBTable::GetIdentityValue(DWORD id) const
@@ -144,10 +138,11 @@ Identity CDBTable::GetIdentityValue(DWORD id) const
 	LPCWSTR colName = GetColumnName(id);
 	if (!colName)
 		return ID_NOT_DEF;
-	const _variant_t& val = const_cast<CDBTable*>(this)->
-		m_mapValues[colName];
-	Identity identity;
-	identity.Set(val, GetIdentityShared());
+    auto it = m_mapValues.find(colName);
+    if (it == m_mapValues.end())
+        return ID_NOT_DEF;
+    Identity identity;
+	identity.Set(it->second, GetIdentityShared());
 	return identity;
 }
 
@@ -315,8 +310,8 @@ void CDBTable::CopyDataFromTable(const CDBTable* pTable,
 		if (NULL == m_pRFind)
 		{
 			_RecordsetPtr pRParams = GetParamsRecordset();
-			for (long i = pRParams->Fields->Count; i--; )
-				m_mapValues[LPCWSTR(pRParams->Fields->Item[i]->Name)] = g_vNull;
+            for (long i = pRParams->Fields->Count; i--; )
+                m_mapValues[LPCWSTR(pRParams->Fields->Item[i]->Name)] = g_vNull;
 			pRParams->Close();
 		}
 		m_bFieldsListed = true;
@@ -332,15 +327,13 @@ void CDBTable::CopyDataFromTable(const CDBTable* pTable,
 		pstrPKName = GetColumnName(fltAutoNumber);
 	}
 
-	for (MapValues::const_iterator iter = pTable->m_mapValues.begin()
-	; iter != pTable->m_mapValues.end()
-	; ++iter)
+    for (const auto& v : pTable->m_mapValues)
 	{
-		if (pstrPKName && iter->first == pstrPKName)
+		if (pstrPKName && v.first == pstrPKName)
 			continue;
-		MapValues::iterator iterDest = m_mapValues.find(iter->first);
+		MapValues::iterator iterDest = m_mapValues.find(v.first);
 		if (iterDest != m_mapValues.end())
-			iterDest->second = iter->second;
+			iterDest->second = v.second;
 	}
 }
 
@@ -375,10 +368,8 @@ void CDBTable::DoCopyDataFromTable(const CDBTable* pTable,
 		}
 		if (pstrPKName && !wcscmp(pstrItemName, pstrPKName))
 			continue;
-		_variant_t buf;
-		VERIFY(SUCCEEDED(item->get_Value(&buf)));
-		m_mapValues[LPCWSTR(pstrItemName)].Attach(buf);
-	}
+        m_mapValues[LPCWSTR(pstrItemName)] = item->Value;
+    }
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -510,9 +501,13 @@ bool CDBTable::WasModified() const
 			ASSERT(0);
 			continue;
 		}
-		const _variant_t& 
-			var = const_cast<CDBTable*>(this)->m_mapValues[LPCWSTR(bstrItemName)];
-		if (!(var.vt & VT_ARRAY) && var != item->Value)
+        auto it = m_mapValues.find(LPCWSTR(bstrItemName));
+        if (it == m_mapValues.end())
+        {
+            if (item->Value.vt != VT_EMPTY)
+                return true;
+        }
+		else if (!(V_VT(&it->second) & VT_ARRAY) && it->second != item->Value)
 			return true;
 	}
 	return false;
@@ -587,11 +582,9 @@ bool CDBTable::OrdinaryInsert()
 			bool first = true;
 			_RecordsetPtr pRParams;
 
-			for (MapValues::iterator iter = m_mapValues.begin()
-			; iter != m_mapValues.end()
-			; ++iter)
+            for (auto& v : m_mapValues)
 			{
-				if (pstrPKName && iter->first == pstrPKName)
+				if (pstrPKName && v.first == pstrPKName)
 					continue;
 				if (first)
 				{
@@ -601,15 +594,15 @@ bool CDBTable::OrdinaryInsert()
 					query += L", ";
 					values += L",?";
 				}
-				query += iter->first;
+				query += v.first;
 
 				if (NULL == pRParams)
 					pRParams = (m_pRFind != NULL)? m_pRFind
 											: GetParamsRecordset();
 
-				FieldPtr item = pRParams->Fields->Item[iter->first.c_str()];
+				FieldPtr item = pRParams->Fields->Item[v.first.c_str()];
 				DataTypeEnum type = item->Type;
-				_ParameterPtr pprm = m_pCAdd->CreateParameter(iter->first.c_str(), 
+				_ParameterPtr pprm = m_pCAdd->CreateParameter(v.first.c_str(), 
 					type, adParamInput, 
 					(adLongVarChar == type || adLongVarWChar == type)? 1 : item->DefinedSize);
 				pprm->NumericScale = item->NumericScale;
@@ -636,19 +629,18 @@ bool CDBTable::OrdinaryInsert()
 		VARIANT* pParams = NULL;
 		CheckError(SafeArrayAccessData(V_ARRAY(&vsa), (void**)&pParams));
 		size_t i = 0;
-		for (MapValues::iterator iter(m_mapValues.begin())
-		; iter != m_mapValues.end(); ++iter)
-		{
-			if (pstrPKName && iter->first == pstrPKName)
+        for (auto& v : m_mapValues)
+        {
+			if (pstrPKName && v.first == pstrPKName)
 				continue;
 
-			if ((VT_ARRAY | VT_UI1) == V_VT(&iter->second))
+			if ((VT_ARRAY | VT_UI1) == V_VT(&v.second))
 			{
-				m_pCAdd->Parameters->Item[iter->first.c_str()]->Size
-					= V_ARRAY(&iter->second)->rgsabound[0].cElements + 1;
+				m_pCAdd->Parameters->Item[v.first.c_str()]->Size
+					= V_ARRAY(&v.second)->rgsabound[0].cElements + 1;
 			}
 
-			pParams[i++] = iter->second;
+			pParams[i++] = v.second;
 		}
 		CheckError(SafeArrayUnaccessData(V_ARRAY(&vsa)));
 		if (i != m_mapValues.size())

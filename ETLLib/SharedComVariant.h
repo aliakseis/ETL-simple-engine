@@ -1,106 +1,57 @@
 #ifndef SharedComVariant_h_
 #define SharedComVariant_h_
 
+#pragma once
 
-//typedef _variant_t CSharedComVariant;
+#include <memory>
+#include <type_traits>
 
 
+//typedef _variant_t SharedComVariant;
 
-class CSharedComVariant
+
+class SharedComVariant
 {
-	class Element : public _variant_t
-	{
-		size_t m_nRefs;
-	public:    
-		Element() : m_nRefs(0) {}
-
-		template <typename T>
-		Element(const T& data) 
-		: _variant_t(data), m_nRefs(0) {}
-
-		~Element()	{ ASSERT(0 == m_nRefs); }
-
-		template <typename T>
-		Element& operator =(const T& data)
-		{
-			*(static_cast<_variant_t*>(this)) = data;
-			return *this;
-		}
-
-		void upcount()		
-		{ 
-			if (this)
-				++m_nRefs; 
-		}
-		void downcount()	
-		{ 
-			if (this && --m_nRefs == 0) 
-				delete this; 
-		}
-		int GetNumRefs()	{ return m_nRefs; }
-	};
-
-	Element* m_pElement;
+    std::shared_ptr<_variant_t> m_element;
 
 public:
-	CSharedComVariant(const CSharedComVariant& other)
-	{
-		m_pElement = other.m_pElement;
-		m_pElement->upcount();
-	}
+    SharedComVariant() = default;
+    SharedComVariant(const SharedComVariant&) = default;
+    SharedComVariant(SharedComVariant&&) = default;
 
-	CSharedComVariant()
-	{
-		m_pElement = NULL;
-	}
+    SharedComVariant& operator =(const SharedComVariant& other) = default;
+    SharedComVariant& operator =(SharedComVariant&& other) = default;
 
-	~CSharedComVariant()
+    template<typename T>
+    typename std::enable_if<
+        std::is_reference<T>::value || !std::is_base_of<VARIANT, T>::value, SharedComVariant&>::type
+    operator =(T&& other)
 	{
-		m_pElement->downcount();
-	}
-
-	template<typename T>
-	const CSharedComVariant& operator =(const T& other)
-	{
-		if (m_pElement && 1 == m_pElement->GetNumRefs())
-			*m_pElement = other;
-		else
-		{
-			m_pElement->downcount();
-			m_pElement = new Element(other);
-			m_pElement->upcount();
-		}
-		return *this;
-	}
-
-	const CSharedComVariant& operator =(const CSharedComVariant& other)
-	{
-		other.m_pElement->upcount();
-		m_pElement->downcount();
-		m_pElement = other.m_pElement;
+        if (m_element.unique())
+            *m_element = std::forward<T>(other);
+        else
+            m_element = std::make_shared<_variant_t>(std::forward<T>(other));
 
 		return *this;
 	}
 
-	void Attach(VARIANT& varSrc)
+    SharedComVariant& operator =(VARIANT&& other)
+    {
+        if (m_element.unique())
+            m_element->Attach(other);
+        else
+            m_element = std::make_shared<_variant_t>(other, false);
+
+        return *this;
+    }
+
+	bool operator == (const SharedComVariant& other) const
 	{
-		if (!m_pElement || 1 != m_pElement->GetNumRefs())
-		{
-			m_pElement->downcount();
-			m_pElement = new Element();
-			m_pElement->upcount();
-		}
-		m_pElement->Attach(varSrc);
+		return m_element && other.m_element
+			&& *m_element == *other.m_element;
 	}
 
-
-	bool operator == (const CSharedComVariant& other) const
-	{
-		return m_pElement && other.m_pElement
-			&& *m_pElement == *other.m_pElement;
-	}
-
-	bool operator != (const CSharedComVariant& other) const
+	bool operator != (const SharedComVariant& other) const
 	{
 		return !(operator ==(other));
 	}
@@ -108,7 +59,7 @@ public:
 
 	bool operator == (const VARIANT& varSrc) const
 	{
-		return m_pElement && *m_pElement == varSrc;
+		return m_element && *m_element == varSrc;
 	}
 
 	bool operator != (const VARIANT& varSrc) const
@@ -118,23 +69,18 @@ public:
 
 	operator const _variant_t&() const 
 	{
-		if (m_pElement)
-			return *m_pElement;
+		if (m_element)
+			return *m_element;
 
 		static _variant_t null_variant;
 		ASSERT(VT_EMPTY == null_variant.vt);
 		return null_variant;
 	}
 
-	_variant_t* operator &() 
-	{ 
-		if (!m_pElement)
-		{
-			m_pElement = new Element();
-			m_pElement->upcount();
-		}
-		return m_pElement;
-	}
+    const _variant_t* operator &() const
+    {
+        return &operator const _variant_t&();
+    }
 };
 
 
