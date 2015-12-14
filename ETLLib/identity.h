@@ -1,6 +1,7 @@
 #ifndef identity_h_
 #define identity_h_
 
+#pragma once
 
 #pragma warning(push, 3)
 #pragma warning(disable:4101 4702 4345)
@@ -89,7 +90,7 @@ public:
 
 	void Set(LPCWSTR val, CIdentityShared& context);
 
-	void Get(_variant_t& val) const;
+    _variant_t Get() const;
 
 	bool operator <  (const Identity& other) const;
 	bool operator != (const Identity& other) const;

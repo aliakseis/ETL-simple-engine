@@ -127,9 +127,7 @@ void CDBTable::SetIdentityValue(DWORD id, Identity value)
 	{
 		LPCWSTR colName = GetColumnName(id);
 		ASSERT(colName);
-		_variant_t buf;
-		value.Get(buf);
-        m_mapValues[colName] = std::move(buf); // attach
+        m_mapValues[colName] = value.Get(); // attach
     }
 }
 

@@ -124,10 +124,12 @@ void Identity::Set(LPCWSTR val, CIdentityShared& context)
 	m_val = &(*iter);
 }
 
-void Identity::Get(_variant_t& val) const
+_variant_t Identity::Get() const
 {
-	get_visitor visitor(val);
+    _variant_t result;
+	get_visitor visitor(result);
 	boost::apply_visitor(visitor, m_val);
+    return _variant_t(result, false); // sort of move
 }
 
 bool Identity::operator <  (const Identity& other) const { return m_val < other.m_val; }
