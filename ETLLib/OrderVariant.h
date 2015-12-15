@@ -456,22 +456,22 @@ public:
 		m_dwFlags = 0; 
 	}
 	COrderVariantKey(const CTableId& id)
-	: m_idSlave(id)
+	: m_idFollower(id)
 	{
 		m_dwFlags = 0; 
 	}
 
-	CTableId GetTblSlaveTo() const	{ return m_idSlave; }
+	CTableId GetTblFollowerTo() const	{ return m_idFollower; }
 	CTableId	GetTblMasterTo() const	{ return m_idMaster; }
 	CTableId	GetCopyTableId() const	
 	{ 
-		return (OV_XLINK == (m_dwFlags & OV_KIND))? m_idMaster : m_idSlave;
+		return (OV_XLINK == (m_dwFlags & OV_KIND))? m_idMaster : m_idFollower;
 	}
 	bool IsOrderVariant() const		{ return m_dwFlags != 0; }
 
 protected:
 	DWORD			m_dwFlags;
-	CTableId		m_idMaster, m_idSlave;
+	CTableId		m_idMaster, m_idFollower;
 };
 
 class ETLLIB_EXPORT COrderVariant : public COrderVariantKey
@@ -490,7 +490,7 @@ public:
 		m_pForkEntry		= NULL;
 		m_nForkedAt			= INT_MIN; // Pseudo null
 		m_pOrderVariant	= NULL;
-		m_pSlaveOV			= NULL;
+		m_pFollowerOV			= NULL;
 		m_VariantCreateFunc = NULL;
 		m_nFieldOffset		= 0;
 		m_nPassedAt			= INT_MIN; // Pseudo null
@@ -528,10 +528,10 @@ public:
 
 	CDBTable* GetTblCopyTo();
 
-	Identity	 GetFieldSlaveTo() const;
-	Identity	 GetFieldSlaveFrom() const;
-	void		 SetFieldSlaveTo(Identity);
-	void		 SetFieldSlaveFrom(Identity);
+	Identity	 GetFieldFollowerTo() const;
+	Identity	 GetFieldFollowerFrom() const;
+	void		 SetFieldFollowerTo(Identity);
+	void		 SetFieldFollowerFrom(Identity);
 
 	Identity	GetPrimaryKeyFrom();
 
@@ -543,7 +543,7 @@ public:
 	void AddCouple();
 	BOOL Convert();
 
-	bool		 IsSelfLink()				{ return m_idMaster == m_idSlave; }
+	bool		 IsSelfLink()				{ return m_idMaster == m_idFollower; }
 
 	void AddSubstRecs(CSubstRecArrayPtr& SubstRecArrayPtr)
 	{
@@ -596,9 +596,9 @@ public:
 
 protected:
 	CDataHandler* GetOrderVariantBase();
-	CDataHandler* GetSlaveOrderVariantBase();
-	CDBTable*		 GetTblSlaveTo_();
-	CDBTable*		 GetTblSlaveFrom_();
+	CDataHandler* GetFollowerOrderVariantBase();
+	CDBTable*		 GetTblFollowerTo_();
+	CDBTable*		 GetTblFollowerFrom_();
 	void		 SetPassedAt(int nPass)			{ m_nPassedAt = nPass; }
 
 	DWORD			m_dwFilterType;
@@ -610,7 +610,7 @@ protected:
 private:
 	CTblCopyHelper* m_pTblCopyHelper;
 	CDataHandler* m_pOrderVariant;
-	CDataHandler* m_pSlaveOV;
+	CDataHandler* m_pFollowerOV;
 
 	CDBTable*	m_pTblCopyTo;
 	CDBTable*			m_pTblSlTo;
@@ -658,12 +658,12 @@ template<class T> class CTypedEntryLink : public COrderVariant
 {
 public:
 	CTypedEntryLink( CCopyIterator		CopyIterator,
-							const CTableId&	idSlave,
+							const CTableId&	idFollower,
 							size_t	nFieldOffset,
 							DWORD	dwFilterType = fltAutoNumber | fltPrimaryKey)
 	{
 		m_CopyIterator		= CopyIterator;
-		m_idSlave			= idSlave;
+		m_idFollower			= idFollower;
 		m_nFieldOffset		= nFieldOffset;
 		m_dwFilterType		= dwFilterType;
 		m_dwFlags		  |= OV_ENTRY;
@@ -671,12 +671,12 @@ public:
 	}
 
 	CTypedEntryLink(  const CTableId&	idMaster,
-							const CTableId&	idSlave,
+							const CTableId&	idFollower,
 							size_t				nFieldOffset,
 							DWORD					dwFilterType)
 	{
 		m_idMaster			= idMaster;
-		m_idSlave			= idSlave;
+		m_idFollower			= idFollower;
 		m_nFieldOffset		= nFieldOffset;
 		m_dwFilterType		= dwFilterType;
 		m_dwFlags		  |= OV_LINK;
@@ -685,11 +685,11 @@ public:
 
 	CTypedEntryLink(	bool					bByReference,
 							const CTableId&	idMaster,
-							const CTableId&	idSlave,
+							const CTableId&	idFollower,
 							size_t				nFieldOffset)
 	{
 		m_idMaster			= idMaster;
-		m_idSlave			= idSlave;
+		m_idFollower			= idFollower;
 		m_nFieldOffset		= nFieldOffset;
 		m_dwFlags		  |= OV_XLINK;
 		if(bByReference)

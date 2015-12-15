@@ -87,7 +87,7 @@ public:
 class ETLLIB_EXPORT CTblCopyHelper 
 {
 //friend CDataHandler* COrderVariant::GetOrderVariantBase();
-//friend CDataHandler* COrderVariant::GetSlaveOrderVariantBase();
+//friend CDataHandler* COrderVariant::GetFollowerOrderVariantBase();
 friend class COrderVariant;
 friend CDataProvider* CDataHandler::GetDataProvider();
 

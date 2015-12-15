@@ -6,22 +6,22 @@
 
 	Replication graph structure is tree-like; but it is a little more complicated then tree. It consists of 
 several trees, which can interfere and contain self-linked branches. COPY_ENTRY macro describes 
-tree root items. In a single item replication case this means that all the data in SlaveTable 
-with SlaveField value = lIdFrom should be replicated using fltFilter for search and cleanup. SlaveField in 
+tree root items. In a single item replication case this means that all the data in FollowerTable 
+with FollowerField value = lIdFrom should be replicated using fltFilter for search and cleanup. FollowerField in 
 table being copied to will be replaced by lIdTo. For database replication stuff, there are 
-COPY_ENTRY macros with fltFilter = fltNoFilter. It means that all data in SlaveTable should be 
-copied. SlaveField in this case should be PK field. In this case lIdTo, lIdFrom will be ignored 
-automatically. There is also COPY_ENTRY_PK(ArrayId, SlaveTable, SlaveField) macro, where 
-ArrayId is pointer to a CArray containing Ids of records to be replicated. SlaveField here is PK.
+COPY_ENTRY macros with fltFilter = fltNoFilter. It means that all data in FollowerTable should be 
+copied. FollowerField in this case should be PK field. In this case lIdTo, lIdFrom will be ignored 
+automatically. There is also COPY_ENTRY_PK(ArrayId, FollowerTable, FollowerField) macro, where 
+ArrayId is pointer to a CArray containing Ids of records to be replicated. FollowerField here is PK.
 	Entries start walking through tree structure described by COPY_LINK macros. This macro 
-means that all SlaveTable records with SlaveField equal PK in MasterTable should be copied and 
-SlaveField value in table being copied to will be replaced by PK in data receiving MasterTable 
-record which was being copied earlier. There exist also "indirect" entries referring to link slave 
+means that all FollowerTable records with FollowerField equal PK in MasterTable should be copied and 
+FollowerField value in table being copied to will be replaced by PK in data receiving MasterTable 
+record which was being copied earlier. There exist also "indirect" entries referring to link follower 
 tables. These entries do not start process of walking through tree. They are used together with links 
 to support filters consisting of several fields. Several entries can be applied to one table 
 simultaneously, too. However links are always treated separately.
 	COPY_XLINK macro describes links being out of this copy force tree (e. g denormalized tables). 
-It requires to update SlaveField values in SlaveTable according to PK in MasterTable. This x-link requires 
+It requires to update FollowerField values in FollowerTable according to PK in MasterTable. This x-link requires 
 for MasterTable to be replicated first. It is important that it can cause deadlock and failure of replication 
 process if links and x-links are constructed in wrong way and cross each other. If  MasterTable 
 record with proper PK is not available, and matching record is not found with fltUniqueIndex filter, 
@@ -316,10 +316,10 @@ BOOL CTblCopyHelper::DoCopyTables(IProgress* pProgress /*= NULL*/)
 		{
 			COrderLink* pLink2 = m_Links[j];
 			CHECK_ADDRESS(pLink2);
-			if(pLink1->GetTblSlaveTo() == pLink2->GetTblSlaveTo())
+			if(pLink1->GetTblFollowerTo() == pLink2->GetTblFollowerTo())
 			{
 				TRACE("Replication: Duplicate links to table \"%ls\" from tables \"%ls\" and \"%ls\".\n", 
-						pLink1->GetTblSlaveTo().GetTableName(),
+						pLink1->GetTblFollowerTo().GetTableName(),
 						pLink1->GetTblMasterTo().GetTableName(), 
 						pLink2->GetTblMasterTo().GetTableName());
 
@@ -379,7 +379,7 @@ BOOL CTblCopyHelper::DoCopyTables(IProgress* pProgress /*= NULL*/)
 #ifdef _DEBUG
 				for(CMultiSetEntries::const_iterator iter = m_WorkFlowEntries.begin()
 				; iter != m_WorkFlowEntries.end(); ++iter)
-					TRACE(_T("Replication Error: Stuck table \"%ls\"\n"), (*iter)->GetTblSlaveTo().GetTableName());
+					TRACE(_T("Replication Error: Stuck table \"%ls\"\n"), (*iter)->GetTblFollowerTo().GetTableName());
 
 				TRACE("Replication Error: List of virgin x-links\n");
 
@@ -404,7 +404,7 @@ BOOL CTblCopyHelper::DoCopyTables(IProgress* pProgress /*= NULL*/)
 		if(!pLink->IsEverPassed())
 		{
 			TRACE("Replication: Link from table \"%ls\" to table \"%ls\" isn't passed.\n", 
-						pLink->GetTblMasterTo().GetTableName(), pLink->GetTblSlaveTo().GetTableName());
+						pLink->GetTblMasterTo().GetTableName(), pLink->GetTblFollowerTo().GetTableName());
 		}
 	}
 #endif
@@ -414,7 +414,7 @@ BOOL CTblCopyHelper::DoCopyTables(IProgress* pProgress /*= NULL*/)
 
 EHandleResult CTblCopyHelper::HandleEntry (COrderEntry* pEntry)
 {
-	if(HasVirginXLinks(pEntry->GetTblSlaveTo(), m_Links.size() + m_XLinks.size())) 
+	if(HasVirginXLinks(pEntry->GetTblFollowerTo(), m_Links.size() + m_XLinks.size())) 
 		return postpone;
 
 	COrderEntry* pCreator = NULL;
@@ -425,7 +425,7 @@ EHandleResult CTblCopyHelper::HandleEntry (COrderEntry* pEntry)
 			ASSERT(!pCreator);
 			pCreator = pLink;
 		}
-		else if(pLink->GetTblSlaveTo() == pEntry->GetTblSlaveTo()
+		else if(pLink->GetTblFollowerTo() == pEntry->GetTblFollowerTo()
 		&& !pLink->IsEverForked() && !IsSerialLink(pLink))
 		{
 			ASSERT(!pLink->IsPassed());
@@ -453,13 +453,13 @@ BOOL CTblCopyHelper::HasVirginXLinks(CTableId pTblTo, int nCount)
 
 	BOOST_FOREACH(CXLink* pXLink, m_XLinks)
 	{
-		if(!pXLink->IsPassed() && pXLink->GetTblSlaveTo() == pTblTo
+		if(!pXLink->IsPassed() && pXLink->GetTblFollowerTo() == pTblTo
 		&& !pXLink->IsSelfLink()
 		&& (!pXLink->IsByReference() || HasVirginXLinks(pXLink->GetTblMasterTo(), nCount-1)))
 		{
 #ifdef _DEBUG
 			m_arrVirginXLinks.push_back(pXLink->GetTblMasterTo().GetTableName() 
-				+ wstring(L"\"-\"") + pXLink->GetTblSlaveTo().GetTableName());
+				+ wstring(L"\"-\"") + pXLink->GetTblFollowerTo().GetTableName());
 #endif// _DEBUG
 			return TRUE;
 		}
@@ -516,7 +516,7 @@ bool CTblCopyHelper::IsPassed(CTableId pTblTo)
 {
 	BOOST_FOREACH(COrderLink* pLink, m_Links)
 	{
-		if(pLink->GetTblSlaveTo() == pTblTo && !pLink->IsPassed())
+		if(pLink->GetTblFollowerTo() == pTblTo && !pLink->IsPassed())
 			return false;
 	}
 
@@ -531,7 +531,7 @@ bool CTblCopyHelper::IsPassed(CTableId pTblTo)
 	{
 		COrderEntry* pEntry = static_cast<COrderEntry*>(*iter);
 		CHECK_ADDRESS(pEntry);
-		ASSERT(pEntry->GetTblSlaveTo() == pTblTo);
+		ASSERT(pEntry->GetTblFollowerTo() == pTblTo);
 		if(!pEntry->IsPassed())
 			return false;
 	}
@@ -585,9 +585,9 @@ struct CTblCopyHelper::CDownstairsContext
 			&& !pEntry->m_CopyIterator.ByPK())
 			{
 				if(nFieldOffset != pEntry->GetFieldOffset() 
-				&& pEntry->GetFieldSlaveFrom() != pEntry->GetIteratorValueFrom())
+				&& pEntry->GetFieldFollowerFrom() != pEntry->GetIteratorValueFrom())
 					return false;
-				pEntry->SetFieldSlaveTo(pEntry->GetIteratorValueTo());
+				pEntry->SetFieldFollowerTo(pEntry->GetIteratorValueTo());
 			}
 		}
 
@@ -596,7 +596,7 @@ struct CTblCopyHelper::CDownstairsContext
 			lPkTo = rContext.m_lPKTo; // Has priority to entries
 		else if(rContext.m_pSubstParentId)
 		{
-			CMapIdentities::iterator iter = rContext.m_pSubstParentId->find(pVar->GetFieldSlaveFrom());
+			CMapIdentities::iterator iter = rContext.m_pSubstParentId->find(pVar->GetFieldFollowerFrom());
 			if (rContext.m_pSubstParentId->end() == iter)
 			{
 				ASSERT(0);
@@ -605,7 +605,7 @@ struct CTblCopyHelper::CDownstairsContext
 			lPkTo = iter->second;
 		}
 		if (IsValid(lPkTo))
-			pVar->SetFieldSlaveTo(lPkTo);
+			pVar->SetFieldFollowerTo(lPkTo);
 		if(rContext.m_bConvert)
 			pVar->Convert();
 		return true;
@@ -619,10 +619,10 @@ BOOL CTblCopyHelper::GoDownstairs(CCopyIterator CopyIterator,
 	CDBTable* pTblTo	 = pTwinTables->GetTblCopyTo();
 
 	CMapIdentities* pSubstParentId = NULL;		
-	CMapIdentities* pSubstId = m_mapTbl2MapId.GetAtNew(pTwinTables->GetTblSlaveTo());		
+	CMapIdentities* pSubstId = m_mapTbl2MapId.GetAtNew(pTwinTables->GetTblFollowerTo());		
 
 // We should mark related Xlinks as passed anyway
-	MarkRelatedXLinksPassed(pTwinTables->GetTblSlaveTo());
+	MarkRelatedXLinksPassed(pTwinTables->GetTblFollowerTo());
 
 	COrderLink* pSelfLink = NULL;
 
@@ -702,8 +702,8 @@ BOOL CTblCopyHelper::GoDownstairs(CCopyIterator CopyIterator,
 							}
 							else
 							{
-								pEntry->SetFieldSlaveFrom(pEntry->GetIteratorValueFrom());
-								pEntry->SetFieldSlaveTo(pEntry->GetIteratorValueTo());
+								pEntry->SetFieldFollowerFrom(pEntry->GetIteratorValueFrom());
+								pEntry->SetFieldFollowerTo(pEntry->GetIteratorValueTo());
 								pEntry->SetPassed();
 							}
 						}
@@ -712,8 +712,8 @@ BOOL CTblCopyHelper::GoDownstairs(CCopyIterator CopyIterator,
 						continue;
 
 					if(dwFilterType != fltNoFilter)
-						pTwinTables->SetFieldSlaveFrom(CopyIterator.GetValueFrom(nValue)); // Has priority to entries
-					pTwinTables->SetFieldSlaveTo(CopyIterator.GetValueTo(nValue));
+						pTwinTables->SetFieldFollowerFrom(CopyIterator.GetValueFrom(nValue)); // Has priority to entries
+					pTwinTables->SetFieldFollowerTo(CopyIterator.GetValueTo(nValue));
 		// Remove dependants
 		// Dependants should be removable - enable cascade deletes
 					if(!bNextSubType && lkDeleteAll == eLeaveData)
@@ -750,7 +750,7 @@ BOOL CTblCopyHelper::GoDownstairs(CCopyIterator CopyIterator,
 				do 
 				{
 					if (HasParams(dwFilterType) && !CopyIterator.ByPK()
-					&& pTwinTables->GetFieldSlaveFrom() != CopyIterator.GetValueFrom(nValue)) 
+					&& pTwinTables->GetFieldFollowerFrom() != CopyIterator.GetValueFrom(nValue)) 
 						continue;
 					try
 					{
@@ -782,7 +782,7 @@ BOOL CTblCopyHelper::GoDownstairs(CCopyIterator CopyIterator,
 
 		if(NULL == pSelfLink)
 		{
-			pSelfLink = GetSelfLink(pTwinTables->GetTblSlaveTo());
+			pSelfLink = GetSelfLink(pTwinTables->GetTblFollowerTo());
 			ASSERT(pSelfLink != pTwinTables);
 			if(NULL != pSelfLink)
 				pSelfLink->SetPassed();
@@ -824,12 +824,12 @@ BOOL CTblCopyHelper::DoCopyLinkedTables(CSubstRecArrayPtr& parrSubstRec,
 			if(bPrimary && pLink->IsSelfLink()) 
 			{
 				pLink->SetPassed();
-				MarkRelatedXLinksPassed(pLink->GetTblSlaveTo());
+				MarkRelatedXLinksPassed(pLink->GetTblFollowerTo());
 			}
 			else
 			{
 				if(parrSubstRec->size() 
-				|| bPrimary && pLink->GetTblSlaveTo() != pTwinTables->GetTblMasterTo())
+				|| bPrimary && pLink->GetTblFollowerTo() != pTwinTables->GetTblMasterTo())
 				{
 					ASSERT(pLink->GetForkedAt() <= GetPass());
 					bool bForkedThisPass = pLink->GetForkedAt() == GetPass();
@@ -847,7 +847,7 @@ BOOL CTblCopyHelper::DoCopyLinkedTables(CSubstRecArrayPtr& parrSubstRec,
 				else
 				{
 					pLink->SetPassed();
-					MarkRelatedXLinksPassed(pLink->GetTblSlaveTo());
+					MarkRelatedXLinksPassed(pLink->GetTblFollowerTo());
 				}
 			}
 	}
@@ -865,7 +865,7 @@ BOOL CTblCopyHelper::GoUpstairs(CDBTable* pTblTo, int nCount)
 	}
 	BOOST_FOREACH(CXLink* pXLink, m_XLinks)
 	{
-		if(pXLink->GetTblSlaveTo() == pTblTo)
+		if(pXLink->GetTblFollowerTo() == pTblTo)
 		{
 			pXLink->FirstSubType();
 
@@ -873,15 +873,15 @@ BOOL CTblCopyHelper::GoUpstairs(CDBTable* pTblTo, int nCount)
 			|| !pXLink->IsDontShortcutRef() && pXLink->IsByReference() && HasSameDatabases())
 				continue;
 
-			Identity idFrom = pXLink->GetFieldSlaveFrom();
+			Identity idFrom = pXLink->GetFieldFollowerFrom();
 
 			if(!IsValid(idFrom))
 			{
-				pXLink->SetFieldSlaveTo(idFrom);
+				pXLink->SetFieldFollowerTo(idFrom);
 			}
 			else if (pXLink->GetTblMasterTo() == pTblTo)
 			{
-				pXLink->SetFieldSlaveTo(ID_NULL);
+				pXLink->SetFieldFollowerTo(ID_NULL);
 			}
 			else 
 			{
@@ -898,13 +898,13 @@ BOOL CTblCopyHelper::GoUpstairs(CDBTable* pTblTo, int nCount)
 						return false;
 					}
 
-					pXLink->SetFieldSlaveTo(pXLink->GetTblCopyTo()->GetPrimaryKey());
+					pXLink->SetFieldFollowerTo(pXLink->GetTblCopyTo()->GetPrimaryKey());
 
 					if(!pXLink->IsAbandonDependants() && arrOutpSubstRec->size() > 0)
 						DoCopyLinkedTables(arrOutpSubstRec, pXLink, false);
 				}
 				else 
-					pXLink->SetFieldSlaveTo(ID_NULL);
+					pXLink->SetFieldFollowerTo(ID_NULL);
 //				pXLink->FreeStatements();
 			}
 		}
@@ -973,7 +973,7 @@ bool CTblCopyHelper::IsSerialLink(COrderLink* pL)
 	switch(pL->GetSerialKind())
 	{
 		case skNotDefined:
-			if(pL->GetTblMasterTo() == pL->GetTblSlaveTo())
+			if(pL->GetTblMasterTo() == pL->GetTblFollowerTo())
 			{
 				pL->SetSerialKind(skSerial);
 				return TRUE;
@@ -982,8 +982,8 @@ bool CTblCopyHelper::IsSerialLink(COrderLink* pL)
 			{
 				BOOST_FOREACH(COrderLink* pLink, m_Links)
 				{
-					if(pL->GetTblMasterTo() == pLink->GetTblSlaveTo() &&
-					pLink->GetTblMasterTo() == pL->GetTblSlaveTo())
+					if(pL->GetTblMasterTo() == pLink->GetTblFollowerTo() &&
+					pLink->GetTblMasterTo() == pL->GetTblFollowerTo())
 					{
 						pL->SetSerialKind(skSerial);
 						return TRUE;
@@ -1036,9 +1036,9 @@ BOOL CTblCopyHelper::CopyReferenceTables(IProgress* pProgress, bool bClear /*= f
 			{
 				CXLink* pXLink1 = XLinks[i];
 				CXLink* pXLink2 = XLinks[j];
-				if(pXLink1->GetTblMasterTo() == pXLink2->GetTblSlaveTo())
+				if(pXLink1->GetTblMasterTo() == pXLink2->GetTblFollowerTo())
 				{
-					ASSERT(pXLink2->GetTblMasterTo() != pXLink1->GetTblSlaveTo());
+					ASSERT(pXLink2->GetTblMasterTo() != pXLink1->GetTblFollowerTo());
 					swap(XLinks[i], XLinks[j]);
 					break;
 				}
@@ -1129,7 +1129,7 @@ void CTblCopyHelper::ArrangeOrphanXLinks(bool bInitial)
 		CHECK_ADDRESS(pXLink1);
 		if(pXLink1->IsSelfLink())
 			TRACE("Replication: X-link from table \"%ls\" to itself. Take special care about copying order.\n", 
-					pXLink1->GetTblSlaveTo().GetTableName());
+					pXLink1->GetTblFollowerTo().GetTableName());
 		if(!pXLink1->IsByReference() && !pXLink1->IsPassed())
 		{
 			CMultiSetEntries::const_iterator iter = m_WorkFlowEntries.find(pXLink1);
@@ -1138,13 +1138,13 @@ void CTblCopyHelper::ArrangeOrphanXLinks(bool bInitial)
 			{
 				if (m_Links.end() == find_if(m_Links.begin(), m_Links.end()
 				, bind<bool>(equal_to<CTableId>(), pXLink1->GetTblMasterTo()
-								, bind(&COrderLink::GetTblSlaveTo, _1))))
+								, bind(&COrderLink::GetTblFollowerTo, _1))))
 				{
 					if (bInitial)
 					{
 						pXLink1->SetByReference();
 						TRACE(_T("Orfan x-link from the table \"%ls\" to the table \"%ls\" converted to a r-link.\n"), 
-							pXLink1->GetTblMasterTo().GetTableName(), pXLink1->GetTblSlaveTo().GetTableName());
+							pXLink1->GetTblMasterTo().GetTableName(), pXLink1->GetTblFollowerTo().GetTableName());
 					}
 					else
 					{
@@ -1169,10 +1169,10 @@ BOOL CTblCopyHelper::BeforeCopyTables(IProgress* pProgressBar)
 		if (m_Links.end() == find_if(m_Links.begin(), m_Links.end()
 		, bind<bool>(logical_and<bool>()
 			, bind<bool>(logical_not<bool>(), bind(&CTblCopyHelper::IsSerialLink, this, _1))
-			, bind<bool>(equal_to<CTableId>(), pEntry->GetTblSlaveTo()
-								, bind(&COrderLink::GetTblSlaveTo, _1)))))
+			, bind<bool>(equal_to<CTableId>(), pEntry->GetTblFollowerTo()
+								, bind(&COrderLink::GetTblFollowerTo, _1)))))
 		{
-			TRACE(_T("\"%ls\"\n"), m_Entries[j]->GetTblSlaveTo().GetTableName());
+			TRACE(_T("\"%ls\"\n"), m_Entries[j]->GetTblFollowerTo().GetTableName());
 			m_WorkFlowEntries.insert(m_Entries[j]);
 			m_Entries.erase(m_Entries.begin() + j);
 		}
@@ -1188,8 +1188,8 @@ BOOL CTblCopyHelper::BeforeCopyTables(IProgress* pProgressBar)
 		CHECK_ADDRESS(pXLink1);
 		if(pXLink1->IsSelfLink())
 			TRACE("Replication: X-link from table \"%ls\" to itself. Take special care about copying order.\n", 
-					pXLink1->GetTblSlaveTo().GetTableName());
-		if (!pXLink1->IsByReference() || !pXLink1->GetTblSlaveTo())
+					pXLink1->GetTblFollowerTo().GetTableName());
+		if (!pXLink1->IsByReference() || !pXLink1->GetTblFollowerTo())
 			continue;
 		for (int j = i; --j >=0; )
 		{
@@ -1197,17 +1197,17 @@ BOOL CTblCopyHelper::BeforeCopyTables(IProgress* pProgressBar)
 			if(!pXLink2->IsByReference())
 				continue;
 			CHECK_ADDRESS(pXLink2);
-			if(pXLink1->GetTblSlaveTo() == pXLink2->GetTblSlaveTo())
+			if(pXLink1->GetTblFollowerTo() == pXLink2->GetTblFollowerTo())
 			{
 				for(int k = m_XLinks.size(); --k >= 0; )
 				{
 					CXLink* pXLink3 = m_XLinks[k];
 					if(!pXLink3->IsByReference())
 						continue;
-					if(pXLink3->GetTblMasterTo() == pXLink1->GetTblSlaveTo())
+					if(pXLink3->GetTblMasterTo() == pXLink1->GetTblFollowerTo())
 					{
 						TRACE("Replication: Duplicate ref.links to table \"%ls\" from tables \"%ls\" and \"%ls\".\n", 
-								pXLink1->GetTblSlaveTo().GetTableName(),
+								pXLink1->GetTblFollowerTo().GetTableName(),
 								pXLink1->GetTblMasterTo().GetTableName(), 
 								pXLink2->GetTblMasterTo().GetTableName());
 						break;

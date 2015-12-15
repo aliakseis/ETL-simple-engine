@@ -314,24 +314,24 @@ BOOL COrderVariant::Convert()
 {
 	if(NULL != m_pMapId)
 	{
-		if(IsValid(GetFieldSlaveFrom()))
+		if(IsValid(GetFieldFollowerFrom()))
 		{
-			CMapIdentities::iterator it = m_pMapId->find(GetFieldSlaveFrom());
+			CMapIdentities::iterator it = m_pMapId->find(GetFieldFollowerFrom());
 			if (it != m_pMapId->end())
-				SetFieldSlaveTo(it->second);
+				SetFieldFollowerTo(it->second);
 			else
 			{
 				if(IsConvertOnly())
 				{
-					SetFieldSlaveTo(ID_NULL);
+					SetFieldFollowerTo(ID_NULL);
 					return TRUE;
 				}
 				else if(GetTblCopyHelper()->Convert(this))
 				{
-					if(IsValid(GetFieldSlaveTo()))
+					if(IsValid(GetFieldFollowerTo()))
 					{
-						m_pMapId->SetAt(GetFieldSlaveFrom(), GetFieldSlaveTo());
-						GetOrderVariantBase()->OnRefAdded(GetFieldSlaveTo());
+						m_pMapId->SetAt(GetFieldFollowerFrom(), GetFieldFollowerTo());
+						GetOrderVariantBase()->OnRefAdded(GetFieldFollowerTo());
 					}
 				}
 				else
@@ -339,7 +339,7 @@ BOOL COrderVariant::Convert()
 			}
 		}
 		else
-			SetFieldSlaveTo(GetFieldSlaveFrom());
+			SetFieldFollowerTo(GetFieldFollowerFrom());
 		return TRUE;
 	}
 	else
@@ -450,33 +450,33 @@ void COrderVariant::SetUIChoiceKind(UIChoiceKind ck)
 bool COrderVariant::SetUniqueName()			{ return GetOrderVariantBase()->SetUniqueName(); }
 
 
-Identity	COrderVariant::GetFieldSlaveTo()	 const
+Identity	COrderVariant::GetFieldFollowerTo()	 const
 { 
-	return GetIdentityValue(const_cast<COrderVariant*>(this)->GetTblSlaveTo_(), GetFieldOffset());
+	return GetIdentityValue(const_cast<COrderVariant*>(this)->GetTblFollowerTo_(), GetFieldOffset());
 } 
 
-Identity	COrderVariant::GetFieldSlaveFrom()  const
+Identity	COrderVariant::GetFieldFollowerFrom()  const
 { 
 	const CDataHandler* pBase 
-		= const_cast<COrderVariant*>(this)->GetSlaveOrderVariantBase();
+		= const_cast<COrderVariant*>(this)->GetFollowerOrderVariantBase();
 	return (pBase)?
 		pBase->GetFieldFrom(GetFieldOffset())
-		: GetIdentityValue(const_cast<COrderVariant*>(this)->GetTblSlaveFrom_(), GetFieldOffset());
+		: GetIdentityValue(const_cast<COrderVariant*>(this)->GetTblFollowerFrom_(), GetFieldOffset());
 } 
 
-void	COrderVariant::SetFieldSlaveTo(Identity lId)
+void	COrderVariant::SetFieldFollowerTo(Identity lId)
 { 
 	CHECK_ADDRESS(this);
-	SetIdentityValue(GetTblSlaveTo_(), GetFieldOffset(), lId);
+	SetIdentityValue(GetTblFollowerTo_(), GetFieldOffset(), lId);
 } 
 
-void	COrderVariant::SetFieldSlaveFrom(Identity lId)
+void	COrderVariant::SetFieldFollowerFrom(Identity lId)
 { 
-	CDataHandler* pBase = GetSlaveOrderVariantBase();
+	CDataHandler* pBase = GetFollowerOrderVariantBase();
 	if(pBase)
 		pBase->SetFieldFrom(GetFieldOffset(), lId);
 	else
-		SetIdentityValue(GetTblSlaveFrom_(), GetFieldOffset(), lId);
+		SetIdentityValue(GetTblFollowerFrom_(), GetFieldOffset(), lId);
 } 
 
 
@@ -522,20 +522,20 @@ CDataHandler* COrderVariant::GetOrderVariantBase()
 	return m_pOrderVariant;
 }
 
-CDataHandler* COrderVariant::GetSlaveOrderVariantBase()
+CDataHandler* COrderVariant::GetFollowerOrderVariantBase()
 {
 	if(OV_XLINK != (m_dwFlags & OV_KIND))
 		return m_pOrderVariant;
-	if(!m_pSlaveOV)
+	if(!m_pFollowerOV)
 	{
 		CTblCopyHelper* pTblCopyHelper = GetTblCopyHelper();
 		if(pTblCopyHelper)
 		{
-			CDataHandlerKey key(GetTblSlaveTo());
+			CDataHandlerKey key(GetTblFollowerTo());
 			CSetVariantBases::const_iterator iter 
 				= pTblCopyHelper->m_OrderVariants.find(static_cast<CDataHandler*>(&key));
 			if (iter != pTblCopyHelper->m_OrderVariants.end())
-				m_pSlaveOV = *iter;
+				m_pFollowerOV = *iter;
 			else
 			{
 				return NULL;
@@ -543,24 +543,24 @@ CDataHandler* COrderVariant::GetSlaveOrderVariantBase()
 
 		}
 	}
-	CHECK_ADDRESS(m_pSlaveOV);
-	return m_pSlaveOV;
+	CHECK_ADDRESS(m_pFollowerOV);
+	return m_pFollowerOV;
 }
 
 
-CDBTable* COrderVariant::GetTblSlaveFrom_() 
+CDBTable* COrderVariant::GetTblFollowerFrom_() 
 {
 	return HandleCreateTable(
-		m_idSlave,
+		m_idFollower,
 		m_pTblSlFrom,
 		GetTblCopyHelper()->GetHolderFrom());
 }
 
 
-CDBTable* COrderVariant::GetTblSlaveTo_() 
+CDBTable* COrderVariant::GetTblFollowerTo_() 
 {
 	return HandleCreateTable(
-		m_idSlave,
+		m_idFollower,
 		m_pTblSlTo,
 		GetTblCopyHelper()->GetHolderTo());
 }
@@ -569,7 +569,7 @@ CDBTable* COrderVariant::GetTblSlaveTo_()
 LPCWSTR COrderVariant::GetEntityName() const
 {
 	return (OV_XLINK == (m_dwFlags & OV_KIND))?
-		m_idMaster.GetTableName() : m_idSlave.GetTableName();
+		m_idMaster.GetTableName() : m_idFollower.GetTableName();
 }
 
 
@@ -577,7 +577,7 @@ bool IsEqual(COrderVariant* pVar1, COrderVariant* pVar2)
 {
 	CHECK_ADDRESS(pVar1); CHECK_ADDRESS(pVar2);
 	return pVar1->m_idMaster == pVar2->m_idMaster 
-		&& pVar1->m_idSlave == pVar2->m_idSlave
+		&& pVar1->m_idFollower == pVar2->m_idFollower
 		&& pVar1->m_nFieldOffset == pVar2->m_nFieldOffset;
 }
 
