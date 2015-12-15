@@ -25,6 +25,7 @@ class CDBAttrubuteDesc;
 #include <deque>
 #pragma warning(pop)
 
+#include <memory>
 
 #include <google/dense_hash_map>
 
@@ -59,87 +60,44 @@ struct CSubstRec
 	}
 };
 
-class CSubstRecArray : public std::deque<CSubstRec>
+typedef std::deque<CSubstRec> CSubstRecArray;
+
+typedef std::shared_ptr<CSubstRecArray> CSubstRecArrayPtr;
+
+
+class ETLLIB_EXPORT CCopyIterator
 {
-	size_t m_nRefs;
-public:    
-	CSubstRecArray()	{ m_nRefs = 0; }
-	~CSubstRecArray()	{ ASSERT(0 == m_nRefs); }
-	void upcount()		{ ++m_nRefs; }
-	void downcount()	{ if (--m_nRefs == 0) delete this; }
-	int GetNumRefs()	{ return m_nRefs; }
+    enum
+    {
+        ciNotDef = 0,
+        ciSingle,
+        ciMultiple,
+        ciByPK
+    }
+    m_ciKind;
 
-	void Append(const CSubstRecArray& other)
-	{
-		insert(end(), other.begin(), other.end());
-	}
-};
+    struct Pair
+    {
+        Identity m_lValueTo, m_lValueFrom;
+        Pair(Identity lValueTo, Identity lValueFrom) 
+            : m_lValueTo(lValueTo), m_lValueFrom(lValueFrom) {}
+    };
 
-template <class T> class Ptr 
-{    
-	T* p;
-public:
-	Ptr(T* p_) : p(p_) { p->upcount(); }    
-	~Ptr()			{ p->downcount(); }
-	operator T*()	{ return p; }    
-	T& operator*() { return *p; }
-	T* operator->(){ return p; }    
-	Ptr& operator=(Ptr<T> &p_) { return operator=((T *) p_); }    
-	Ptr& operator=(T* p_) 
-	{
-		p_->upcount(); 
-		p->downcount(); 
-		p = p_; 
+    union
+    {
+        CSubstRecArrayPtr m_parrSubstRec;
+        const std::deque<Identity> * m_parrId;
+        Pair m_pair;
+    };
 
-		return *this;    
-	}
-};
-
-typedef Ptr<CSubstRecArray> CSubstRecArrayPtr;
-
-class CCopyIteratorData
-{
-protected:
-	enum
-	{
-		ciNotDef = 0,
-		ciSingle,
-		ciMultiple,
-		ciByPK
-	}	
-	m_ciKind;
-
-	struct Pair
-	{
-		Identity m_lValueTo, m_lValueFrom;
-		Pair() : m_lValueTo(ID_NOT_DEF), m_lValueFrom(ID_NOT_DEF) {}
-	} 
-	m_pair;
-
-	union
-	{
-		CSubstRecArray* m_parrSubstRec;
-		std::deque<Identity> * m_parrId;
-	};
-
-public:
-	CCopyIteratorData()
-	{
-		m_ciKind = ciNotDef;
-		m_parrSubstRec = NULL;
-	}
-};
-
-class ETLLIB_EXPORT CCopyIterator : public CCopyIteratorData
-{
 public:
 	CCopyIterator()	{ m_ciKind  = ciNotDef; }
 	CCopyIterator(const CCopyIterator& other);
-	CCopyIterator(CSubstRecArrayPtr& parrSubstRec)
+	CCopyIterator(const CSubstRecArrayPtr& parrSubstRec)
 	{
 		SetData(parrSubstRec);
 	}
-	CCopyIterator(std::deque<Identity>* parrId)
+	CCopyIterator(const std::deque<Identity>* parrId)
 	{
 		SetData(parrId);
 	}
@@ -152,11 +110,11 @@ public:
 		SetData(lValueTo, lValueFrom);
 	}
 	~CCopyIterator() { Clear(); }
-	const CCopyIterator& operator = (const CCopyIterator& other);
+	CCopyIterator& operator = (const CCopyIterator& other);
 	void Clear();
 	void SetData(Identity lValueTo, Identity lValueFrom);
-	void SetData(CSubstRecArrayPtr& parrSubstRec);
-	void SetData(std::deque<Identity>* parrId);
+	void SetData(const CSubstRecArrayPtr& parrSubstRec);
+	void SetData(const std::deque<Identity>* parrId);
 	void SetData(Identity lPK);
 	void AddData(CSubstRecArrayPtr& parrSubstRec);
 	BOOL ByPK();

@@ -635,7 +635,7 @@ BOOL CTblCopyHelper::GoDownstairs(CCopyIterator CopyIterator,
 
 	COrderLink* pSelfLink = NULL;
 
-	CSubstRecArrayPtr arrOutpSubstRec = new CSubstRecArray;
+    CSubstRecArrayPtr arrOutpSubstRec = std::make_shared<CSubstRecArray>();
 	size_t nPrevCount = 0;
 
 	const bool bHasPrimaryKey = pTwinTables->HasPrimaryKey();
@@ -799,7 +799,7 @@ BOOL CTblCopyHelper::GoDownstairs(CCopyIterator CopyIterator,
 		if(NULL != pSelfLink)
 			if(arrOutpSubstRec->size() > nPrevCount)
 			{
-				CSubstRecArrayPtr arrSelfSubstRec = new CSubstRecArray;
+				CSubstRecArrayPtr arrSelfSubstRec = std::make_shared<CSubstRecArray>();
 				//for(size_t i = nPrevCount, nPrevCount = arrOutpSubstRec->size();
 				//	 i < nPrevCount;
 				//	 i++)
@@ -811,7 +811,7 @@ BOOL CTblCopyHelper::GoDownstairs(CCopyIterator CopyIterator,
 			else pSelfLink = NULL;
 	}
 	while(NULL != pSelfLink);
-	if(!pTwinTables->AfterCopyAll(arrOutpSubstRec))
+	if(!pTwinTables->AfterCopyAll(arrOutpSubstRec.get()))
 		return FALSE;
 
 	GetHolderTo()->FreeStatements();
@@ -918,7 +918,7 @@ BOOL CTblCopyHelper::GoUpstairs(CDBTable* pTblTo, int nCount)
 			{
 				if(pXLink->FindByPrimaryKeyFrom(idFrom)) 
 				{
-					CSubstRecArrayPtr arrOutpSubstRec = new CSubstRecArray;
+					CSubstRecArrayPtr arrOutpSubstRec = std::make_shared<CSubstRecArray>();
 					try
 					{
 						TransferData(static_cast<CTblCopyHelperUpstairs*>(this), CUpstairsContext(),
@@ -1133,7 +1133,7 @@ BOOL CTblCopyHelper::CopyReferenceTables(IProgress* pProgress, bool bClear /*= f
 			CMapIdentities* pMapId = NULL;
 			VERIFY(m_mapTbl2MapId.Lookup(pXLink->GetTblMasterTo(), pMapId));
 
-			CSubstRecArrayPtr arrOutpSubstRec = new CSubstRecArray;
+			CSubstRecArrayPtr arrOutpSubstRec = std::make_shared<CSubstRecArray>();
 			DWORD dwFilterType = fltNoFilter;
 			pXLink->FirstSubType();
 			do
@@ -1154,7 +1154,7 @@ BOOL CTblCopyHelper::CopyReferenceTables(IProgress* pProgress, bool bClear /*= f
 			}
 			while(pXLink->NextSubType(NULL, dwFilterType));
 
-			if(!pXLink->AfterCopyAll(arrOutpSubstRec))
+			if(!pXLink->AfterCopyAll(arrOutpSubstRec.get()))
 				return FALSE;
 			if(arrOutpSubstRec->size())
 				DoCopyLinkedTables(arrOutpSubstRec, pXLink, false);

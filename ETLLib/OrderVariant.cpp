@@ -12,9 +12,6 @@
 
 #include <sstream>
 
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#endif
 
 using std::wstring;
 
@@ -48,61 +45,60 @@ CCopyIterator::CCopyIterator(const CCopyIterator& other)
 	*this = other;
 }
 
-const CCopyIterator& CCopyIterator::operator = (const CCopyIterator& other)
+CCopyIterator& CCopyIterator::operator = (const CCopyIterator& other)
 {
 	Clear();
-	*((CCopyIteratorData*)this) = (CCopyIteratorData&)other;
-	if(ciMultiple == m_ciKind)
-	{
-		CHECK_ADDRESS(m_parrSubstRec);
-		ASSERT(m_parrSubstRec->GetNumRefs() > 0);
-		m_parrSubstRec->upcount();
-	}
+
+    switch (other.m_ciKind)
+    {
+    case ciSingle: new (&m_pair) Pair(other.m_pair); break;
+    case ciMultiple: new (&m_parrSubstRec) CSubstRecArrayPtr(other.m_parrSubstRec); break;
+    case ciByPK: m_parrId = other.m_parrId; break;
+    }
+
+    m_ciKind = other.m_ciKind;
+
 	return *this;
 }
 
 void CCopyIterator::Clear()
 {
-	if(ciMultiple == m_ciKind)
-	{
-		CHECK_ADDRESS(m_parrSubstRec);
-		ASSERT(m_parrSubstRec->GetNumRefs() > 0);
-		m_parrSubstRec->downcount();
-		m_parrSubstRec = NULL;
-	}
-	m_ciKind  = ciNotDef; 
+    switch (m_ciKind)
+    {
+    case ciSingle: m_pair.~Pair(); break;
+    case ciMultiple: m_parrSubstRec.~CSubstRecArrayPtr(); break;
+    case ciByPK: m_parrId = nullptr; break;
+    }
+    m_ciKind  = ciNotDef;
 }
 
 
 void CCopyIterator::SetData(Identity lValueTo, Identity lValueFrom)
 {
 	Clear();
+    new (&m_pair) Pair(lValueTo, lValueFrom);
 	m_ciKind = ciSingle;
-	m_pair.m_lValueTo = lValueTo; 
-	m_pair.m_lValueFrom = lValueFrom;
 }
 
-void CCopyIterator::SetData(CSubstRecArrayPtr& parrSubstRec)
+void CCopyIterator::SetData(const CSubstRecArrayPtr& parrSubstRec)
 {
 	Clear();
+    new (&m_parrSubstRec) CSubstRecArrayPtr(parrSubstRec);
 	m_ciKind = ciMultiple;
-	m_parrSubstRec = parrSubstRec;
-	m_parrSubstRec->upcount();
 }
 
-void CCopyIterator::SetData(std::deque<Identity>* parrId)
+void CCopyIterator::SetData(const std::deque<Identity>* parrId)
 {
 	Clear();
-	m_ciKind = ciByPK;
 	m_parrId = parrId;
+    m_ciKind = ciByPK;
 }
 
 void CCopyIterator::SetData(Identity lPK)
 {
 	Clear();
-	m_ciKind = ciSingle;
-	m_pair.m_lValueTo = ID_NOT_DEF; 
-	m_pair.m_lValueFrom = lPK;
+    new (&m_pair) Pair(ID_NOT_DEF, lPK);
+    m_ciKind = ciSingle;
 }
 
 void CCopyIterator::AddData(CSubstRecArrayPtr& parrSubstRec)
@@ -112,18 +108,11 @@ void CCopyIterator::AddData(CSubstRecArrayPtr& parrSubstRec)
 		ASSERT(0); return;
 	}
 //	Copy on write
-	if(1 == m_parrSubstRec->GetNumRefs())
-		m_parrSubstRec->Append(*parrSubstRec);
-	else
-	{
-		ASSERT(m_parrSubstRec->GetNumRefs() > 0);
-		CSubstRecArrayPtr arrSubstRec = new CSubstRecArray;
-		arrSubstRec->Append(*m_parrSubstRec);
-		arrSubstRec->Append(*parrSubstRec);
-		m_parrSubstRec->downcount();
-		m_parrSubstRec = arrSubstRec;
-		m_parrSubstRec->upcount();
-	}
+    if (!m_parrSubstRec.unique())
+    {
+        m_parrSubstRec = std::make_shared<CSubstRecArray>(*m_parrSubstRec);
+    }
+    m_parrSubstRec->insert(m_parrSubstRec->end(), parrSubstRec->begin(), parrSubstRec->end());
 }
 
 BOOL CCopyIterator::ByPK()
@@ -164,7 +153,6 @@ Identity CCopyIterator::GetValueTo(int nIndex)
 			ASSERT(0 == nIndex);
 			return m_pair.m_lValueTo;
 		case ciMultiple:
-			CHECK_ADDRESS(m_parrSubstRec);
 			return m_parrSubstRec->at(nIndex).m_lKeyTo;
 		default:
 			ASSERT(0);
@@ -180,7 +168,6 @@ Identity CCopyIterator::GetValueFrom(int nIndex)
 			ASSERT(0 == nIndex);
 			return m_pair.m_lValueFrom;
 		case ciMultiple:
-			CHECK_ADDRESS(m_parrSubstRec);
 			return m_parrSubstRec->at(nIndex).m_lKeyFrom;
 		case ciByPK:
 			CHECK_ADDRESS(m_parrId);
@@ -198,7 +185,6 @@ int CCopyIterator::GetSize()
 		case ciSingle:
 			return 1;
 		case ciMultiple:
-			CHECK_ADDRESS(m_parrSubstRec);
 			return m_parrSubstRec->size();
 		case ciByPK:
 			if(NULL == m_parrId)
