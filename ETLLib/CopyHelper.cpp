@@ -124,6 +124,12 @@ struct Delete
 
 class transfer_exception {};
 
+void DoAddDropRecord(COrderVariant* pVar, bool& bUpdate)
+{
+	VERIFY(pVar->GetTblCopyTo()->AddRecord(FALSE));
+	bUpdate = true;
+}
+
 void HandleTransferIds(CSubstRecArrayPtr& arrOutpSubstRec, 
 								 Identity lIdTo, Identity lIdFrom, bool bAdded)
 {
@@ -131,12 +137,10 @@ void HandleTransferIds(CSubstRecArrayPtr& arrOutpSubstRec,
 		arrOutpSubstRec->push_back(CSubstRec(lIdTo, lIdFrom));
 }
 
-template<typename T, typename C, typename H>
-// Does not work with other result types
-inline void TransferData(T* pHolder, const C& rContext, COrderVariant* pVar, int nCount, 
-	 bool bForceAdd, CMapIdentities* pSubstId, H& rIdHandler, bool canBatch)
+template<typename C>
+void CTblCopyHelper::TransferData(const C& rContext, COrderVariant* pVar, int nCount,
+	 bool bForceAdd, CMapIdentities* pSubstId, CSubstRecArrayPtr& rIdHandler, bool canBatch)
 {
-	CHECK_ADDRESS(pHolder);
 	CHECK_ADDRESS(pVar);
 	CHECK_ADDRESS(pSubstId);
 
@@ -145,15 +149,15 @@ inline void TransferData(T* pHolder, const C& rContext, COrderVariant* pVar, int
 	pVar->CopyData(false);
 	pVar->SetIDs();
 
-	if(!pHolder->DoConvertAndFilter(pVar, pSubstId, rContext))
+	if(!DoConvertAndFilter(pVar, pSubstId, rContext))
 		return;
 
 	if(pVar->IsObsolete())
 		return;
-	if(!pHolder->GoUpstairs(pTblTo, nCount - 1))
+	if(!GoUpstairs(pTblTo, nCount - 1))
 		throw transfer_exception();
 
-	pHolder->SetDefValues(pVar);
+	SetDefValues(pVar);
 	pVar->CorrectTableData();
 	if(pVar->IsObsoleteByRefs())
 		return;
@@ -166,15 +170,15 @@ inline void TransferData(T* pHolder, const C& rContext, COrderVariant* pVar, int
 	if(bForceAdd || !pTblTo->HasUniqueFilter()
 	|| !pVar->FindMatchByUI())
 	{
-		pHolder->DoAddDropRecord(pVar, bUpdate);
+		DoAddDropRecord(pVar, bUpdate);
 		bHandleDependants = bUpdate;
 	}
 	else
 	{
-		if(pHolder->HasSameDatabases() && pTblTo->HasPrimaryKey()
+		if(HasSameDatabases() && pTblTo->HasPrimaryKey()
 		&& pTblTo->GetPrimaryKey() == pVar->GetPrimaryKeyFrom())
 			return;
-		pHolder->DoHandleRecord(pVar, bUpdate, bHandleDependants);
+		DoHandleRecord(pVar, bUpdate, bHandleDependants);
 		lIdTo = pTblTo->GetPrimaryKey();
 	}
 	if(bUpdate)
@@ -548,7 +552,7 @@ void CTblCopyHelper::MarkRelatedXLinksPassed(CTableId pTblTo)
 
 //////////////////////////////////////////////////////////////
 
-struct CDownstairsContext
+struct CTblCopyHelper::CDownstairsContext
 {
 	Identity m_lPKTo;
 	CMapIdentities* m_pSubstParentId;
@@ -562,13 +566,7 @@ struct CDownstairsContext
 	}
 };
 
-class CTblCopyHelperDownstairs : public CTblCopyHelper
-{
-	template<typename T, typename C, typename H>
-	friend void TransferData(T* pHolder, const C& rContext, COrderVariant* pVar, 
-		int nCount, bool bForceAdd, CMapIdentities* pSubstId, H& rIdHandler, bool canBatch);
-
-	bool DoConvertAndFilter(COrderVariant* pVar, CMapIdentities* pSubstId, 
+	bool CTblCopyHelper::DoConvertAndFilter(COrderVariant* pVar, CMapIdentities* pSubstId,
 		const CDownstairsContext& rContext)
 	{
 		if(pVar->HasPrimaryKey())
@@ -612,13 +610,6 @@ class CTblCopyHelperDownstairs : public CTblCopyHelper
 			pVar->Convert();
 		return true;
 	}
-
-	void DoAddDropRecord(COrderVariant* pVar, bool& bUpdate)
-	{
-		VERIFY(pVar->GetTblCopyTo()->AddRecord(FALSE));
-		bUpdate = true;
-	}
-};
 
 //////////////////////////////////////////////////////////////
 
@@ -763,7 +754,7 @@ BOOL CTblCopyHelper::GoDownstairs(CCopyIterator CopyIterator,
 						continue;
 					try
 					{
-						TransferData(static_cast<CTblCopyHelperDownstairs*>(this), context,
+						TransferData(context,
 							pTwinTables, EXTRA_SPACE, bForceAdd,
 							pSubstId, arrOutpSubstRec, m_bFastLoad);
 					}
@@ -865,28 +856,6 @@ BOOL CTblCopyHelper::DoCopyLinkedTables(CSubstRecArrayPtr& parrSubstRec,
 
 //////////////////////////////////////////////////////////////
 
-struct CUpstairsContext {};
-		
-class CTblCopyHelperUpstairs : public CTblCopyHelper
-{
-	template<typename T, typename C, typename H>
-	friend void TransferData(T* pHolder, const C& rContext, COrderVariant* pVar, 
-		int nCount, bool bForceAdd, CMapIdentities* pSubstId, H& rIdHandler, bool canBatch);
-
-	bool DoConvertAndFilter(COrderVariant*, CMapIdentities*, 
-		const CUpstairsContext&)
-	{
-		return true;
-	}
-
-	void DoAddDropRecord(COrderVariant* pVar, bool& bUpdate)
-	{
-		VERIFY(pVar->GetTblCopyTo()->AddRecord(FALSE));
-		bUpdate = true;
-	}
-};
-
-//////////////////////////////////////////////////////////////
 
 BOOL CTblCopyHelper::GoUpstairs(CDBTable* pTblTo, int nCount)
 {
@@ -921,7 +890,7 @@ BOOL CTblCopyHelper::GoUpstairs(CDBTable* pTblTo, int nCount)
 					CSubstRecArrayPtr arrOutpSubstRec = std::make_shared<CSubstRecArray>();
 					try
 					{
-						TransferData(static_cast<CTblCopyHelperUpstairs*>(this), CUpstairsContext(),
+						TransferData(CUpstairsContext(),
 							pXLink, nCount, false, pXLink->m_pMapId, arrOutpSubstRec, false);
 					}
 					catch(transfer_exception&)
@@ -1046,26 +1015,11 @@ int CTblCopyHelper::EnumReferenceTables(CXLinkPtrArray* pArray /*= NULL*/)
 
 //////////////////////////////////////////////////////////////
 
-struct CRefContext {};
-		
-class CTblCopyHelperRef : public CTblCopyHelper
-{
-	template<typename T, typename C, typename H>
-	friend void TransferData(T* pHolder, const C& rContext, COrderVariant* pVar, 
-		int nCount, bool bForceAdd, CMapIdentities* pSubstId, H& rIdHandler, bool canBatch);
-
-	bool DoConvertAndFilter(COrderVariant* pVar, CMapIdentities* pMapId, 
+	bool CTblCopyHelper::DoConvertAndFilter(COrderVariant* pVar, CMapIdentities* pMapId,
 		const CRefContext&)
 	{
 		return pMapId->find(pVar->GetPrimaryKeyFrom()) == pMapId->end();
 	}
-
-	void DoAddDropRecord(COrderVariant* pVar, bool& bUpdate)
-	{
-		VERIFY(pVar->GetTblCopyTo()->AddRecord(FALSE));
-		bUpdate = true;
-	}
-};
 
 //////////////////////////////////////////////////////////////
 
@@ -1142,7 +1096,7 @@ BOOL CTblCopyHelper::CopyReferenceTables(IProgress* pProgress, bool bClear /*= f
 				{
 					try
 					{
-						TransferData(static_cast<CTblCopyHelperRef*>(this), CRefContext(),
+						TransferData(CRefContext(),
 							pXLink, XLinks.size(), false, pMapId, arrOutpSubstRec, m_bFastLoad);
 					}
 					catch(transfer_exception&)

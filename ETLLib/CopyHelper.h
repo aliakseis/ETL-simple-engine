@@ -148,6 +148,23 @@ protected:
 	virtual UIChoiceKind AskChoice(COrderVariant* pLink) = 0;
 	virtual void PumpPaintMsg()	{}
 
+    template<typename C>
+    void TransferData(const C& rContext, COrderVariant* pVar, int nCount,
+        bool bForceAdd, CMapIdentities* pSubstId, CSubstRecArrayPtr& rIdHandler, bool canBatch);
+
+    struct CDownstairsContext;
+    bool DoConvertAndFilter(COrderVariant* pVar, CMapIdentities* pSubstId,
+        const CDownstairsContext& rContext);
+
+    struct CUpstairsContext {};
+    bool DoConvertAndFilter(COrderVariant*, CMapIdentities*, const CUpstairsContext&)
+    {
+        return true;
+    }
+
+    struct CRefContext {};
+    bool DoConvertAndFilter(COrderVariant* pVar, CMapIdentities* pMapId, const CRefContext&);
+
 public:
 	CTblCopyHelper();
 	~CTblCopyHelper();
