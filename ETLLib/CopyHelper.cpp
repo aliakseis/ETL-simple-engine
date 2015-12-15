@@ -1259,7 +1259,7 @@ void CTblCopyHelper::DoHandleRecord(COrderVariant* pLink, bool& bUpdate
 	bool bEditExisting = false;
 	bool bAddNew = false;
 
-	CDBTable* pTblTo = pLink->GetTblCopyTo();
+	CDBTable* const pTblTo = pLink->GetTblCopyTo();
 
 	if(pLink->IsUpdateDestination())
 		bEditExisting = true;
@@ -1290,17 +1290,30 @@ void CTblCopyHelper::DoHandleRecord(COrderVariant* pLink, bool& bUpdate
 	else if (bAddNew)
 	{
 		bHandleDependants = true;
-		VERIFY(pLink->GetTblCopyTo()->AddRecord(FALSE));
 	}
 	else
 		return;
 
-	pLink->CopyData(false);
-	VERIFY(GoUpstairs(pTblTo, m_XLinks.size()));
-	SetDefValues(pLink);
-	pLink->CorrectTableData();
-	if (bAddNew)
-		pLink->SetUniqueName();
+    auto setTableData = [this, pLink]() {
+        pLink->CopyData(false);
+        VERIFY(GoUpstairs(pLink->GetTblCopyTo(), m_XLinks.size()));
+        SetDefValues(pLink);
+        pLink->CorrectTableData();
+    };
+
+    setTableData();
+
+    if (bAddNew)
+    {
+        int nInstance = -1;
+        while (pLink->FindMatchByUI())
+        {
+            setTableData();
+            pLink->SetUniqueName(++nInstance);
+        }
+        VERIFY(pTblTo->AddRecord(FALSE));
+    }
+
 	bUpdate = bAddNew || pTblTo->WasModified();
 }
 

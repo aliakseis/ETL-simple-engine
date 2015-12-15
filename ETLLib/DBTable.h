@@ -23,6 +23,7 @@
 #include "SharedComVariant.h"
 
 #include <memory>
+#include <functional>
 
 
 #ifdef ETLLIB_EXPORTS
@@ -30,13 +31,6 @@
 #else
 #define ETLLIB_EXPORT __declspec(dllimport)
 #endif
-
-
-class IStringIterator
-{
-public:
-	virtual bool VisitString(std::wstring&) const = 0;
-};
 
 
 struct AtomDesc
@@ -72,7 +66,7 @@ public:
 	bool Update(bool canBatch = false);
 
 	void CopyDataFromTable(const CDBTable* pOther, bool bCopyPK = true);
-	int IterateThruStrings(const IStringIterator& iter, DWORD filter);
+	int IterateThruStrings(std::function<bool(std::wstring&)> iter, DWORD filter);
 
 	void SetIdentityValue(DWORD id, Identity value);
 	Identity GetIdentityValue(DWORD id) const;

@@ -447,7 +447,8 @@ UIChoiceKind COrderVariant::GetUIChoiceKind()
 void COrderVariant::SetUIChoiceKind(UIChoiceKind ck)
 									{ GetOrderVariantBase()->SetUIChoiceKind(ck); }
 
-bool COrderVariant::SetUniqueName()			{ return GetOrderVariantBase()->SetUniqueName(); }
+bool COrderVariant::SetUniqueName(int nInstance)			
+                                    { return GetOrderVariantBase()->SetUniqueName(nInstance); }
 
 
 Identity	COrderVariant::GetFieldFollowerTo()	 const
@@ -625,40 +626,14 @@ BOOL CDataHandler::FindMatchByUI()
 	return GetTblCopyTo()->FindFirst(fltUniqueIndex); 
 }
 
-bool CDataHandler::SetUniqueName()
+bool CDataHandler::SetUniqueName(int nInstance)
 {
-	class CMakeCopyName : public IStringIterator
-	{
-		const int m_nInstance;
-	public:
-		CMakeCopyName(int nInstance) : m_nInstance(nInstance) {}
-		virtual bool VisitString(wstring& str) const
-		{
-			MakeCopyName(str, m_nInstance);
-			return true;
-		}
-	};
-
-	CTableHolder tempHolder;
-	tempHolder.SetDBManager(GetTblCopyHelper()->GetHolderTo()->GetDBManager());
-	CDBTable* pTblTemp = NULL;
-	if(!HandleCreateTable(GetCopyTableId(), pTblTemp, &tempHolder))
-		return false;
-	int nInstance = -1;
-	pTblTemp->CopyDataFromTable(GetTblCopyTo());
-	while(pTblTemp->FindFirst(fltUniqueIndex))
-	{
-		pTblTemp->CopyDataFromTable(GetTblCopyTo());
-		if(!pTblTemp->IterateThruStrings(CMakeCopyName(++nInstance), fltUniqueIndex))
-			return false;
-	}
-	if(nInstance != -1)
-	{
-		CMakeCopyName makeName(nInstance);
-		GetTblCopyTo()->IterateThruStrings(makeName, fltUniqueIndex);
-	}
-	return true;
+    return !!GetTblCopyTo()->IterateThruStrings([nInstance](wstring& str) {
+        MakeCopyName(str, nInstance);
+        return true;
+    }, fltUniqueIndex);
 }
+
 
 CDBTable* CDataHandler::GetTblCopyTo()
 {

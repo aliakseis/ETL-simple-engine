@@ -395,7 +395,7 @@ public:
 	virtual BOOL DeleteRecord();
 	virtual void DeleteRecords(DWORD dwFilterType);
 	virtual BOOL FindMatchByUI();
-	virtual bool SetUniqueName();
+	virtual bool SetUniqueName(int nInstance);
 
 	void FreeStatements();
 	BOOL FindNextFrom();
@@ -590,7 +590,7 @@ public:
 	int GetForkedAt()			{ return m_nForkedAt; }
 	bool IsEverForked()			{ return m_nForkedAt != INT_MIN; }
 
-	bool SetUniqueName();
+	bool SetUniqueName(int nInstance);
 
 	bool HasPrimaryKey();
 

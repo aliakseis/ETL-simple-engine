@@ -811,7 +811,7 @@ bool CDBTable::FastInsert()
 
 //////////////////////////////////////////////////////////////////////
 
-int CDBTable::IterateThruStrings(const IStringIterator& it, DWORD filter)
+int CDBTable::IterateThruStrings(std::function<bool(std::wstring&)> func, DWORD filter)
 {
 	int cnt = 0;
 
@@ -827,7 +827,7 @@ int CDBTable::IterateThruStrings(const IStringIterator& it, DWORD filter)
 				if (VT_BSTR == val.vt)
 				{
 					wstring buf(val.bstrVal);
-					if (!it.VisitString(buf))
+					if (!func(buf))
 						return 0;
 					iter->second = buf.c_str();
 					++cnt;

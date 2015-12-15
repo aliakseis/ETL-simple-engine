@@ -46,27 +46,17 @@ public:
 			SetConvertOnly();
 	}
 
-	bool SetUniqueName()
-	{
-		CTableHolder tempHolder;
-		tempHolder.SetDBManager(GetTblCopyHelper()->GetHolderTo()->GetDBManager());
-		CDBTable* pTblTemp = GetCopyTableId().GetDBTable(&tempHolder);
+    bool SetUniqueName(int)
+    {
+        WCHAR id[6] = {0};
+        for (int i = 0; i < 5; i++)
+        	id[i] = WCHAR('A' + rand() % ('Z' - 'A' + 1));
 
-		WCHAR id[6] = {0};
-		pTblTemp->CopyDataFromTable(GetTblCopyTo());
-		while(pTblTemp->FindFirst(fltUniqueIndex))
-		{
-			pTblTemp->CopyDataFromTable(GetTblCopyTo());
-			for (int i = 0; i < 5; i++)
-				id[i] = WCHAR('A' + rand() % ('Z' - 'A' + 1));
-			pTblTemp->SetIdentityValue(fltUniqueIndex, 
-				tempHolder.GetIdentity(id));
-		}
-		if(id[0] != 0)
-			GetTblCopyTo()->SetIdentityValue(fltUniqueIndex, 
-				GetTblCopyHelper()->GetHolderTo()->GetIdentity(id));
-		return true;
-	}
+        GetTblCopyTo()->SetIdentityValue(fltUniqueIndex,
+            GetTblCopyHelper()->GetHolderTo()->GetIdentity(id));
+
+        return true;
+    }
 };
 
 template<> class CTypedOrderVarDesc<CEmployees> : public CTypedOrderVariant<CEmployees>
