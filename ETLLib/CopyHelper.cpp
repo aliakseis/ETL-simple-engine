@@ -65,19 +65,11 @@ It can be also used for data transformation.
 
 #include <google/dense_hash_set>
 
-#pragma warning(disable:4100)
-#include <boost/foreach.hpp>
-#pragma warning(default:4100)
-
-#include <boost/bind.hpp>
 
 using std::for_each;
 using std::pair;
 using std::swap;
 using std::find_if;
-using std::equal_to;
-using std::logical_and;
-using std::logical_not;
 
 using namespace boost;
 
@@ -399,7 +391,7 @@ BOOL CTblCopyHelper::DoCopyTables(IProgress* pProgress /*= NULL*/)
 	while (bResult && !m_WorkFlowEntries.empty());
 
 #ifdef _DEBUG
-	BOOST_FOREACH(COrderLink* pLink, m_Links)
+	for (COrderLink* pLink : m_Links)
 	{
 		if(!pLink->IsEverPassed())
 		{
@@ -418,7 +410,7 @@ EHandleResult CTblCopyHelper::HandleEntry (COrderEntry* pEntry)
 		return postpone;
 
 	COrderEntry* pCreator = NULL;
-	BOOST_FOREACH(COrderLink* pLink, m_Links)
+	for (COrderLink* pLink : m_Links)
 	{
 		if(IsEqual(pLink, pEntry))
 		{
@@ -451,7 +443,7 @@ BOOL CTblCopyHelper::HasVirginXLinks(CTableId pTblTo, int nCount)
 		ASSERT(FALSE); return FALSE;
 	}
 
-	BOOST_FOREACH(CXLink* pXLink, m_XLinks)
+	for (CXLink* pXLink : m_XLinks)
 	{
 		if(!pXLink->IsPassed() && pXLink->GetTblFollowerTo() == pTblTo
 		&& !pXLink->IsSelfLink()
@@ -471,7 +463,7 @@ BOOL CTblCopyHelper::HasVirginXLinks(CTableId pTblTo, int nCount)
 COrderLink* CTblCopyHelper::GetSelfLink(CTableId pTblTo)
 {
 	COrderLink* pSelfLink = NULL;
-	BOOST_FOREACH(COrderLink* pLink, m_Links)
+	for (COrderLink* pLink : m_Links)
 	{
 		if(pLink->GetTblMasterTo() == pTblTo && pLink->IsSelfLink())
 		{
@@ -514,7 +506,7 @@ bool IdToPresents(CMapIdentities* pSubstId, Identity lIdToFind, CIdSet& rIdCache
 
 bool CTblCopyHelper::IsPassed(CTableId pTblTo)
 {
-	BOOST_FOREACH(COrderLink* pLink, m_Links)
+	for (COrderLink* pLink : m_Links)
 	{
 		if(pLink->GetTblFollowerTo() == pTblTo && !pLink->IsPassed())
 			return false;
@@ -541,7 +533,7 @@ bool CTblCopyHelper::IsPassed(CTableId pTblTo)
 void CTblCopyHelper::MarkRelatedXLinksPassed(CTableId pTblTo)
 {
 	if(IsPassed(pTblTo))
-		BOOST_FOREACH(CXLink* pXLink, m_XLinks)
+		for (CXLink* pXLink : m_XLinks)
 		{
 			if(pXLink->GetTblMasterTo() == pTblTo)
 			{
@@ -579,7 +571,7 @@ struct CTblCopyHelper::CDownstairsContext
 		CDBTable* pTblTo		= pVar->GetTblCopyTo();
 		size_t nFieldOffset = pVar->GetFieldOffset();
 
-		BOOST_FOREACH(COrderEntry* pEntry, m_Entries)
+		for (COrderEntry* pEntry : m_Entries)
 		{
 			if(pEntry->GetTblCopyTo() == pTblTo
 			&& !pEntry->m_CopyIterator.ByPK())
@@ -681,7 +673,7 @@ BOOL CTblCopyHelper::GoDownstairs(CCopyIterator CopyIterator,
 					bool bRestart = false;
 					pTblTo->InitData();
 		// First iterate thru sibling entries - both in and out
-					BOOST_FOREACH(COrderEntry* pEntry, m_Entries)
+					for (COrderEntry* pEntry : m_Entries)
 					{
 						if(pEntry->GetTblCopyTo() == pTblTo) 
 						{
@@ -818,7 +810,7 @@ BOOL CTblCopyHelper::DoCopyLinkedTables(CSubstRecArrayPtr& parrSubstRec,
 	MarkRelatedXLinksPassed(pTwinTables->GetTblMasterTo());
 
 	CTableId	pTblTo = pTwinTables->GetCopyTableId();
-	BOOST_FOREACH(COrderLink* pLink, m_Links)
+	for (COrderLink* pLink : m_Links)
 	{
 		if(pLink->GetTblMasterTo() == pTblTo)
 			if(bPrimary && pLink->IsSelfLink()) 
@@ -863,7 +855,7 @@ BOOL CTblCopyHelper::GoUpstairs(CDBTable* pTblTo, int nCount)
 	{
 		ASSERT(FALSE); return FALSE;
 	}
-	BOOST_FOREACH(CXLink* pXLink, m_XLinks)
+	for (CXLink* pXLink : m_XLinks)
 	{
 		if(pXLink->GetTblFollowerTo() == pTblTo)
 		{
@@ -926,7 +918,7 @@ void CTblCopyHelper::AddLink(COrderLink* pL)
 {
 	CHECK_ADDRESS(pL);
 	ASSERT(pL->IsLink());
-	BOOST_FOREACH(COrderLink* pLink, m_Links)
+	for (COrderLink* pLink : m_Links)
 	{
 		if(IsEqual(pL, pLink)) 
 		{
@@ -949,7 +941,7 @@ void CTblCopyHelper::AddXLink(CXLink* pL)
 	CHECK_ADDRESS(pL);
 	ASSERT(pL->IsXLink());
 
-	BOOST_FOREACH(CXLink* pXLink, m_XLinks)
+	for (CXLink* pXLink : m_XLinks)
 	{
 		if(IsEqual(pL, pXLink)) 
 		{
@@ -980,7 +972,7 @@ bool CTblCopyHelper::IsSerialLink(COrderLink* pL)
 			}
 			else
 			{
-				BOOST_FOREACH(COrderLink* pLink, m_Links)
+				for (COrderLink* pLink : m_Links)
 				{
 					if(pL->GetTblMasterTo() == pLink->GetTblFollowerTo() &&
 					pLink->GetTblMasterTo() == pL->GetTblFollowerTo())
@@ -1001,7 +993,7 @@ bool CTblCopyHelper::IsSerialLink(COrderLink* pL)
 int CTblCopyHelper::EnumReferenceTables(CXLinkPtrArray* pArray /*= NULL*/)
 {
 	int nCount = 0;
-	BOOST_FOREACH(CXLink* pXLink, m_XLinks)
+	for (CXLink* pXLink : m_XLinks)
 	{
 		if(pXLink->IsByReference())	
 		{
@@ -1136,9 +1128,8 @@ void CTblCopyHelper::ArrangeOrphanXLinks(bool bInitial)
 
 			if(iter == m_WorkFlowEntries.end())
 			{
-				if (m_Links.end() == find_if(m_Links.begin(), m_Links.end()
-				, bind<bool>(equal_to<CTableId>(), pXLink1->GetTblMasterTo()
-								, bind(&COrderLink::GetTblFollowerTo, _1))))
+				if (m_Links.end() == find_if(m_Links.begin(), m_Links.end(),
+                    [pXLink1](COrderLink* pLink) { return pLink->GetTblFollowerTo() == pXLink1->GetTblMasterTo(); }))
 				{
 					if (bInitial)
 					{
@@ -1166,11 +1157,11 @@ BOOL CTblCopyHelper::BeforeCopyTables(IProgress* pProgressBar)
 		if(pEntry->IsAccessory())
 			continue;
 
-		if (m_Links.end() == find_if(m_Links.begin(), m_Links.end()
-		, bind<bool>(logical_and<bool>()
-			, bind<bool>(logical_not<bool>(), bind(&CTblCopyHelper::IsSerialLink, this, _1))
-			, bind<bool>(equal_to<CTableId>(), pEntry->GetTblFollowerTo()
-								, bind(&COrderLink::GetTblFollowerTo, _1)))))
+		if (m_Links.end() == find_if(m_Links.begin(), m_Links.end(),
+            [this, pEntry](COrderLink* pLink) {
+                return !IsSerialLink(pLink) &&
+                    pEntry->GetTblFollowerTo() == pLink->GetTblFollowerTo();
+        }))
 		{
 			TRACE(_T("\"%ls\"\n"), m_Entries[j]->GetTblFollowerTo().GetTableName());
 			m_WorkFlowEntries.insert(m_Entries[j]);
