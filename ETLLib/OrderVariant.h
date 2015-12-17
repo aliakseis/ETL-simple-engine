@@ -1,5 +1,5 @@
-#ifndef __OrderVariant_h__
-#define __OrderVariant_h__
+#ifndef OrderVariant_h__
+#define OrderVariant_h__
 
 
 #include "BellsMacrosX.h"
@@ -185,7 +185,7 @@ enum UIChoiceKind
 void MakeCopyName(std::wstring& strName, int nInstance);
 
 
-typedef CDBTable* (*TableObjCreator) (CTableHolder*);
+typedef std::unique_ptr<CDBTable> (*TableObjCreator) (CTableHolder*);
 
 class ETLLIB_EXPORT CTableId
 {
@@ -227,9 +227,9 @@ template<class T> class CreateTableId
 {
 	LPCWSTR m_pszTableName;
 
-	static CDBTable* CreateTable (CTableHolder* pHolder)
+	static std::unique_ptr<CDBTable> CreateTable (CTableHolder* pHolder)
 	{
-		return new T(pHolder);
+		return std::make_unique<T>(pHolder);
 	}
 
 public:
@@ -363,7 +363,7 @@ template<class T> class CTypedGenericDataProvider
 
 //////////////////////////////////////////////////////////////////////////
 
-typedef CDataProvider* (*ProviderCreateFunc)();
+typedef std::unique_ptr<CDataProvider> (*ProviderCreateFunc)();
 
 class ETLLIB_EXPORT CDataHandler
 : public CDataHandlerKey
@@ -446,7 +446,7 @@ private:
 };
 
 
-typedef CDataHandler* (*VariantCreateFunc)();
+typedef std::unique_ptr<CDataHandler> (*VariantCreateFunc)();
 
 class COrderVariantKey
 {
@@ -549,7 +549,7 @@ public:
 	{
 		m_CopyIterator.AddData(SubstRecArrayPtr);
 	}
-	COrderVariant* ForkEntry(CSubstRecArrayPtr& );
+    std::unique_ptr<COrderVariant> ForkEntry(CSubstRecArrayPtr& );
 	void ConvertToEntry(CSubstRecArrayPtr& SubstRecArrayPtr);
 
 	BOOL DeleteRecord();
@@ -635,11 +635,9 @@ template<class T> class COrderVariantBase : public CDataHandler
 {
 public:
 	COrderVariantBase()		{ m_ProviderCreateFunc = GetDataProvider; }
-protected:
-	T* GetTypedTblCopyTo()	{ return static_cast<T*>(GetTblCopyTo()); }
 private:
-	static CDataProvider* GetDataProvider()	
-		{ return new CTypedGenericDataProvider<T>(); }	
+	static std::unique_ptr<CDataProvider> GetDataProvider()	
+		{ return std::make_unique<CTypedGenericDataProvider<T>>(); }	
 };
 
 template<class T> class CTypedOrderVariant : public COrderVariantBase<T>
@@ -700,8 +698,8 @@ public:
 protected:
 	void CommonConstruct()	{ m_VariantCreateFunc = DoGetOrderVariantBase; }
 
-	static CDataHandler* DoGetOrderVariantBase() 
-	{ return new CTypedOrderVarDesc<T>; }
+	static std::unique_ptr<CDataHandler> DoGetOrderVariantBase() 
+	{ return std::make_unique<CTypedOrderVarDesc<T>>(); }
 };
 
-#endif //__OrderVariant_h__
+#endif //OrderVariant_h__

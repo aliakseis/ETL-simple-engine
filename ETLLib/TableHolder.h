@@ -7,10 +7,10 @@
 
 #pragma once
 
-#pragma warning(disable:4100 4702)
-#include <map>
-#pragma warning(default:4100 4702)
 #include "identity.h"
+
+#include <map>
+#include <memory>
 
 #ifdef ETLLIB_EXPORTS
 #define ETLLIB_EXPORT __declspec(dllexport)
@@ -23,6 +23,9 @@ class CDBTable;
 
 class ETLLIB_EXPORT CTableHolder
 {
+    CTableHolder(const CTableHolder&) = delete;
+    CTableHolder& operator =(const CTableHolder&) = delete;
+
 public:
 	friend class CDBTable;
 
@@ -43,7 +46,7 @@ public:
 	bool HasSameDatabase(const CTableHolder& other) const;
 
 	bool Lookup(LPCWSTR pszTableName, CDBTable*& rpDBTable) const;
-	void SetDBTable(LPCWSTR pszTableName, CDBTable* pDBTable);
+	void SetDBTable(LPCWSTR pszTableName, std::unique_ptr<CDBTable> pDBTable);
 
 	void FreeStatements();
 
@@ -68,7 +71,7 @@ private:
 			return wcscmp(s1, s2) < 0;
 		}
 	};
-	typedef std::map<LPCWSTR, CDBTable*, CompareWStrings> CMapLPCWSTR2PDBTable;
+	typedef std::map<LPCWSTR, std::unique_ptr<CDBTable>, CompareWStrings> CMapLPCWSTR2PDBTable;
 	CMapLPCWSTR2PDBTable m_mapDBTables;
 
 	CIdentityShared m_IdentityShared;

@@ -230,13 +230,14 @@ CDBTable* CTableId::GetDBTable(CTableHolder* pHolder) const
 	{
 		ASSERT(0); return NULL;
 	}
-	CDBTable* pTable = NULL;
-	if (!pHolder->Lookup(m_pszTableName, pTable))
+	CDBTable* result = NULL;
+	if (!pHolder->Lookup(m_pszTableName, result))
 	{
-		pTable = m_pfnCreator(pHolder);
-		pHolder->SetDBTable(m_pszTableName, pTable);
+		auto table = m_pfnCreator(pHolder);
+        result = table.get();
+		pHolder->SetDBTable(m_pszTableName, std::move(table));
 	}
-	return pTable;
+	return result;
 }
 
 
@@ -355,7 +356,7 @@ void COrderVariant::SetIDs()
 
 LeaveKind COrderVariant::GetLeaveData()		{ return GetOrderVariantBase()->GetLeaveData(); }
 
-COrderVariant* COrderVariant::ForkEntry(CSubstRecArrayPtr& parrSubstRec)
+std::unique_ptr<COrderVariant> COrderVariant::ForkEntry(CSubstRecArrayPtr& parrSubstRec)
 {
 	m_nForkedAt = GetTblCopyHelper()->GetPass();
 
@@ -371,11 +372,11 @@ COrderVariant* COrderVariant::ForkEntry(CSubstRecArrayPtr& parrSubstRec)
 			return NULL;
 		}
 
-	COrderVariant* pEntry = new COrderVariant(*this);
+	auto pEntry = std::make_unique<COrderVariant>(*this);
 	pEntry->ConvertToEntry(parrSubstRec);
 	pEntry->m_pMapId = m_pMapId;
 	pEntry->SetTblCopyHelper(GetTblCopyHelper());
-	m_pForkEntry = pEntry;
+	m_pForkEntry = pEntry.get();
 	m_pForkEntry->m_pForkEntry = this;
 	return pEntry;
 }
@@ -504,17 +505,17 @@ CDataHandler* COrderVariant::GetOrderVariantBase()
 		if(pTblCopyHelper)
 		{
 			CDataHandlerKey key(GetCopyTableId());
-			CSetVariantBases::const_iterator iter 
-				= pTblCopyHelper->m_OrderVariants.find(static_cast<CDataHandler*>(&key));
+			auto iter = pTblCopyHelper->m_OrderVariants.find(&key);
 			if(iter != pTblCopyHelper->m_OrderVariants.end())
-				m_pOrderVariant = *iter;
+				m_pOrderVariant = iter->get();
 			else if (m_VariantCreateFunc)
 			{
-				m_pOrderVariant = m_VariantCreateFunc();
-				if (m_pOrderVariant)
+                auto pOrderVariant = m_VariantCreateFunc();
+				if (pOrderVariant)
 				{
-					m_pOrderVariant->SetParameters(pTblCopyHelper, GetCopyTableId());
-					pTblCopyHelper->m_OrderVariants.insert(m_pOrderVariant);
+					pOrderVariant->SetParameters(pTblCopyHelper, GetCopyTableId());
+                    m_pOrderVariant = pOrderVariant.get();
+					pTblCopyHelper->m_OrderVariants.insert(std::move(pOrderVariant));
 				}
 			}
 		}
@@ -533,10 +534,10 @@ CDataHandler* COrderVariant::GetFollowerOrderVariantBase()
 		if(pTblCopyHelper)
 		{
 			CDataHandlerKey key(GetTblFollowerTo());
-			CSetVariantBases::const_iterator iter 
-				= pTblCopyHelper->m_OrderVariants.find(static_cast<CDataHandler*>(&key));
+			auto iter 
+				= pTblCopyHelper->m_OrderVariants.find(&key);
 			if (iter != pTblCopyHelper->m_OrderVariants.end())
-				m_pFollowerOV = *iter;
+				m_pFollowerOV = iter->get();
 			else
 			{
 				return NULL;
@@ -651,20 +652,20 @@ CDataProvider* CDataHandler::GetDataProvider()
 		if(pTblCopyHelper)
 		{
 			CDataHandlerKey key(GetCopyTableId());
-			CSetDataProviders::const_iterator iter 
-				= pTblCopyHelper->m_DataProviders.find(static_cast<CDataProvider*>(&key));
+			auto iter = pTblCopyHelper->m_DataProviders.find(&key);
 			if(iter != pTblCopyHelper->m_DataProviders.end())
 			{
-				m_pDataProvider = *iter;
+				m_pDataProvider = iter->get();
 				SetCopyTableId(m_pDataProvider, GetCopyTableId());
 			}
 			else if(m_ProviderCreateFunc)
 			{
-				m_pDataProvider = m_ProviderCreateFunc();
-				if(m_pDataProvider)
+                auto pDataProvider = m_ProviderCreateFunc();
+                if(pDataProvider)
 				{
-					m_pDataProvider->SetParameters(pTblCopyHelper, GetCopyTableId());
-					pTblCopyHelper->m_DataProviders.insert(m_pDataProvider);
+					pDataProvider->SetParameters(pTblCopyHelper, GetCopyTableId());
+                    m_pDataProvider = pDataProvider.get();
+					pTblCopyHelper->m_DataProviders.insert(std::move(pDataProvider));
 				}
 			}
 		}

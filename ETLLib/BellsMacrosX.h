@@ -1,18 +1,7 @@
 // BellsMacrosX.h : header file
 //
-#ifndef __BELLS_MACROS_X__H__
-#define __BELLS_MACROS_X__H__
-
-/////////////////////////////////////////////////////////////////////////////
-
-struct DeleteSecond
-{
-	template<typename T> void operator ()(const T& r) const
-	{
-		delete r.second;
-	}
-};
-
+#ifndef BELLS_MACROS_X__H__
+#define BELLS_MACROS_X__H__
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -82,5 +71,3 @@ template<class T> inline void CHECK_NULL_OR_ADDRESS(const T* pData)
 
 
 #endif
-
-/////////////////////////////////////////////////////////////////////////////

@@ -26,7 +26,6 @@ CTableHolder::CTableHolder()
 
 CTableHolder::~CTableHolder()
 {
-	std::for_each(m_mapDBTables.begin(), m_mapDBTables.end(), DeleteSecond());
 }
 
 bool CTableHolder::HasSameDatabase(const CTableHolder& other) const
@@ -41,30 +40,21 @@ bool CTableHolder::Lookup(LPCWSTR pszTableName, CDBTable*& rpDBTable) const
 	CMapLPCWSTR2PDBTable::const_iterator iter = m_mapDBTables.find(pszTableName);
 	if (iter != m_mapDBTables.end())
 	{
-		rpDBTable = iter->second;
+		rpDBTable = iter->second.get();
 		return true;
 	}
 	return false;
 }
 
-void CTableHolder::SetDBTable(LPCWSTR pszTableName, CDBTable* pDBTable)
+void CTableHolder::SetDBTable(LPCWSTR pszTableName, std::unique_ptr<CDBTable> pDBTable)
 {
-	m_mapDBTables[pszTableName] = pDBTable;
+	m_mapDBTables[pszTableName] = std::move(pDBTable);
 }
-
-
-struct DoFreeStatements
-{
-	template<typename T> void operator ()(const T& r) const
-	{
-		r.second->FreeStatements();
-	}
-};
-
 
 void CTableHolder::FreeStatements()
 {
-	std::for_each(m_mapDBTables.begin(), m_mapDBTables.end(), DoFreeStatements());
+    for (const auto& r : m_mapDBTables)
+        r.second->FreeStatements();
 }
 
 Identity CTableHolder::GetIdentity(LPCWSTR pszValue)
