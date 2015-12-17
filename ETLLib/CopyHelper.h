@@ -148,23 +148,21 @@ public:
 	CTblCopyHelper();
 	~CTblCopyHelper();
 	void FreeArrays();
-	void FreeDBHolders();
-	void SetDataSources(CTableHolder* pHolderTo, 
-		CTableHolder* pHolderFrom = NULL, 
-		BOOL bAutoDelete = FALSE);
+	void SetDataSources(std::shared_ptr<CTableHolder> pHolderTo, 
+        std::shared_ptr<CTableHolder> pHolderFrom);
 
 	BOOL CopyTables(IProgress* pProgressBar = NULL);
 	virtual int GetCount() { return m_WorkFlowEntries.size() + m_Links.size(); }
 
 	CTableHolder* GetHolderTo()   
 	{ 
-		CHECK_ADDRESS(m_pHolderTo);
-		return m_pHolderTo; 
+		ASSERT(m_pHolderTo != nullptr);
+		return m_pHolderTo.get(); 
 	}
 	CTableHolder* GetHolderFrom() 
 	{ 
-		CHECK_ADDRESS(m_pHolderFrom);	
-		return m_pHolderFrom;
+		ASSERT(m_pHolderFrom != nullptr);	
+		return m_pHolderFrom.get();
 	}
 
 	bool IsPassed(CTableId pTblTo);
@@ -190,9 +188,8 @@ public:
 	void SetFastLoad(bool bFastLoad)	{ m_bFastLoad = bFastLoad; }
 
 private:
-	CTableHolder* m_pHolderTo;
-	CTableHolder* m_pHolderFrom;
-	BOOL m_bAutoDelete;
+	std::shared_ptr<CTableHolder> m_pHolderTo;
+    std::shared_ptr<CTableHolder> m_pHolderFrom;
 	IProgress* m_pProgress;
 
     std::set<std::unique_ptr<CDataHandler>, IsPDataHandlerKeyLess> m_OrderVariants;

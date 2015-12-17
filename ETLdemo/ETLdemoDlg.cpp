@@ -533,13 +533,13 @@ bool CETLdemoDlg::DoTransform()
 		AfxGetApp()->WriteProfileString(g_szConnectStrings, g_szSource, m_connectStringFrom);
 		AfxGetApp()->WriteProfileString(g_szConnectStrings, g_szDestination, m_connectStringTo);
 
-		CTableHolder DBProTableHolderFrom;
-		DBProTableHolderFrom.SetDBManager(connectionFrom);
-		CTableHolder DBProTableHolderTo;
-		DBProTableHolderTo.SetDBManager(connectionTo);
+		auto DBProTableHolderFrom = std::make_shared<CTableHolder>();
+		DBProTableHolderFrom->SetDBManager(connectionFrom);
+        auto DBProTableHolderTo = std::make_shared<CTableHolder>();
+		DBProTableHolderTo->SetDBManager(connectionTo);
 
 		CDemoCopyHelper CopyHelper;
-		CopyHelper.SetDataSources(&DBProTableHolderTo, &DBProTableHolderFrom);
+		CopyHelper.SetDataSources(DBProTableHolderTo, DBProTableHolderFrom);
 
 		DWORD fltCustomers = fltNoFilter;
 		CCopyIterator iterCustomers;
@@ -558,7 +558,7 @@ bool CETLdemoDlg::DoTransform()
 					DWORD id = m_listCustomers.GetItemData(i);
 					WCHAR buf[7];
 					radix40_to_ascii(buf, (Radix40*)&id, 6);
-					arrCustomers.push_back(DBProTableHolderFrom.GetIdentity(buf));
+					arrCustomers.push_back(DBProTableHolderFrom->GetIdentity(buf));
 				}
 
 			iterCustomers.SetData(&arrCustomers);

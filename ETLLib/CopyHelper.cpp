@@ -156,7 +156,6 @@ CTblCopyHelper::CTblCopyHelper()
 {
 	m_pHolderTo	  = NULL;
 	m_pHolderFrom = NULL;
-	m_bAutoDelete = FALSE;
 	m_pProgress	  = NULL;
 	m_nReferenceTables = -1;
 	m_nPass = 0;
@@ -173,7 +172,6 @@ CTblCopyHelper::CTblCopyHelper()
 CTblCopyHelper::~CTblCopyHelper()
 {
 	FreeArrays();
-	FreeDBHolders();
 }
 
 void CTblCopyHelper::FreeArrays()
@@ -192,32 +190,15 @@ void CTblCopyHelper::FreeArrays()
 	m_nPass = 0;
 }
 
-void CTblCopyHelper::FreeDBHolders()
-{
-	if(m_bAutoDelete) 
-	{
-		delete m_pHolderTo;
-		delete m_pHolderFrom;
-	}
-	m_pHolderTo = NULL;
-	m_pHolderFrom = NULL;
-}
-
-void CTblCopyHelper::SetDataSources(CTableHolder* pHolderTo, 
-		CTableHolder* pHolderFrom /*= NULL*/, 
-		BOOL bAutoDelete /*= FALSE*/)
+void CTblCopyHelper::SetDataSources(std::shared_ptr<CTableHolder> pHolderTo,
+    std::shared_ptr<CTableHolder> pHolderFrom)
 {
 	FreeArrays();
-	FreeDBHolders();
-	if(!pHolderFrom)
-		pHolderFrom = pHolderTo;
-	CHECK_ADDRESS(pHolderTo);
-	CHECK_ADDRESS(pHolderFrom);
+	ASSERT(pHolderTo != nullptr);
+    ASSERT(pHolderFrom != nullptr);
 	m_pHolderTo	  = pHolderTo;
 	m_pHolderFrom = pHolderFrom;
-	m_bAutoDelete = bAutoDelete;
 }
-
 
 
 BOOL CTblCopyHelper::CopyTables(IProgress* pProgressBar /*= NULL*/)
