@@ -90,8 +90,10 @@ public:
 //////////////////////////////////////////////////////////////////////
 
 CDemoCopyHelper::CDemoCopyHelper()
+    : m_bCustomersOrEmployeesOrders(false)
+    , m_doCopyReferenceTables(false)
 {
-	m_bCustomersOrEmployeesOrders = FALSE;
+	
 }
 
 CDemoCopyHelper::~CDemoCopyHelper()
@@ -99,15 +101,20 @@ CDemoCopyHelper::~CDemoCopyHelper()
 }
 
 void CDemoCopyHelper::Init(const CCopyIterator& iterCustomers, DWORD fltCustomers,
-		const CCopyIterator& iterEmployees, DWORD fltEmployees, BOOL bCustomersOrEmployeesOrders)
+		const CCopyIterator& iterEmployees, DWORD fltEmployees, bool bCustomersOrEmployeesOrders)
 {
 	m_bCustomersOrEmployeesOrders = bCustomersOrEmployeesOrders;
+
+    bool doCopyReferenceTables = true;
 
 	COPY_RLINK(Suppliers, Products, CProducts::fltSupplierID);
 	COPY_RLINK(Categories, Products, CProducts::fltCategoryID);
 
-	if (fltCustomers == (fltCustomers & (fltAutoNumber | fltPrimaryKey)))
-		COPY_ENTRY_PK(iterCustomers, Customers, fltPrimaryKey);
+    if (fltCustomers == (fltCustomers & (fltAutoNumber | fltPrimaryKey)))
+    {
+        COPY_ENTRY_PK(iterCustomers, Customers, fltPrimaryKey);
+        doCopyReferenceTables = false;
+    }
 	else
 		COPY_ENTRY(ID_NOT_DEF, ID_NOT_DEF, Customers, 0, fltCustomers);
 
@@ -115,8 +122,11 @@ void CDemoCopyHelper::Init(const CCopyIterator& iterCustomers, DWORD fltCustomer
 	COPY_XLINK(Customers, Orders, COrders::fltCustomerID);
 
 
-	if (fltEmployees == (fltEmployees & (fltAutoNumber | fltPrimaryKey)))
-		COPY_ENTRY_PK(iterEmployees, Employees, fltPrimaryKey);
+    if (fltEmployees == (fltEmployees & (fltAutoNumber | fltPrimaryKey)))
+    {
+        COPY_ENTRY_PK(iterEmployees, Employees, fltPrimaryKey);
+        doCopyReferenceTables = false;
+    }
 	else
 		COPY_ENTRY(ID_NOT_DEF, ID_NOT_DEF, Employees, 0, fltEmployees);
 
@@ -128,6 +138,14 @@ void CDemoCopyHelper::Init(const CCopyIterator& iterCustomers, DWORD fltCustomer
 
 	COPY_LINK(Orders, OrderDetails, COrderDetails::fltOrderID, COrderDetails::fltOrderID);
 	COPY_RLINK(Products, OrderDetails, COrderDetails::fltProductID);
+
+    m_doCopyReferenceTables = doCopyReferenceTables;
+}
+
+bool CDemoCopyHelper::BeforeCopyTables(IProgress* pProgress)
+{
+    return CTblCopyHelper::BeforeCopyTables(pProgress)
+        && (!m_doCopyReferenceTables || CopyReferenceTables(pProgress, true));
 }
 
 UIChoiceKind CDemoCopyHelper::AskChoice(COrderVariant* pLink)

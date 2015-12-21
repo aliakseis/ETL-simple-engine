@@ -201,7 +201,7 @@ void CTblCopyHelper::SetDataSources(std::shared_ptr<CTableHolder> pHolderTo,
 }
 
 
-BOOL CTblCopyHelper::CopyTables(IProgress* pProgressBar /*= NULL*/)
+bool CTblCopyHelper::CopyTables(IProgress* pProgressBar /*= NULL*/)
 {
 	CHECK_NULL_OR_ADDRESS(pProgressBar);
 
@@ -215,7 +215,7 @@ BOOL CTblCopyHelper::CopyTables(IProgress* pProgressBar /*= NULL*/)
 
 //	SetAutoCommitOff();
 
-	BOOL bOK = BeforeCopyTables(pProgressBar) 
+	bool bOK = BeforeCopyTables(pProgressBar) 
 				&& DoCopyTables(pProgressBar)
 				&& AfterCopyTables();
 
@@ -231,7 +231,7 @@ BOOL CTblCopyHelper::CopyTables(IProgress* pProgressBar /*= NULL*/)
 
 enum { EXTRA_SPACE = 1000 };
 
-BOOL CTblCopyHelper::DoCopyTables(IProgress* pProgress /*= NULL*/)
+bool CTblCopyHelper::DoCopyTables(IProgress* pProgress /*= NULL*/)
 {
 	m_pProgress = pProgress;
 
@@ -290,7 +290,7 @@ BOOL CTblCopyHelper::DoCopyTables(IProgress* pProgress /*= NULL*/)
 					ShowProgress();
 					continue;
 				case error:
-					bResult = FALSE;
+					bResult = false;
 					ASSERT(0);
 					break;
 				case postpone:
@@ -314,7 +314,7 @@ BOOL CTblCopyHelper::DoCopyTables(IProgress* pProgress /*= NULL*/)
 				TRACE("Replication Error: End of List of virgin x-links\n");
 #endif
 				ASSERT(0); 
-				bResult = FALSE;
+				bResult = false;
 				break;
 			}
 		}
@@ -914,21 +914,6 @@ bool CTblCopyHelper::IsSerialLink(COrderLink* pL)
 	ASSERT(0); return FALSE;
 }
 
-int CTblCopyHelper::EnumReferenceTables(CXLinkPtrArray* pArray /*= NULL*/)
-{
-	int nCount = 0;
-	for (const auto& pXLink : m_XLinks)
-	{
-		if(pXLink->IsByReference())	
-		{
-			if(pArray)
-				pArray->push_back(pXLink.get());
-			nCount++;
-		}
-	}
-	return nCount;
-}
-
 //////////////////////////////////////////////////////////////
 
 	bool CTblCopyHelper::DoConvertAndFilter(COrderVariant* pVar, CMapIdentities* pMapId,
@@ -939,43 +924,56 @@ int CTblCopyHelper::EnumReferenceTables(CXLinkPtrArray* pArray /*= NULL*/)
 
 //////////////////////////////////////////////////////////////
 
-BOOL CTblCopyHelper::CopyReferenceTables(IProgress* pProgress, bool bClear /*= false*/)
+bool top_sort_DFS_loop(const std::map<CTableId, std::deque<CXLink*>>& adj_list,
+    std::deque<CXLink*>& sorted, std::map<CTableId, bool>& visited, CTableId node)
 {
-	size_t i, j;
-	CXLinkPtrArray XLinks;
-//	Get reference links
-	EnumReferenceTables(&XLinks);
-//	Sort them
-	for(i = 0; i < XLinks.size() - 1; i++)
-		do
-			for(j = i + 1; j < XLinks.size(); j++)
-			{
-				CXLink* pXLink1 = XLinks[i];
-				CXLink* pXLink2 = XLinks[j];
-				if(pXLink1->GetTblMasterTo() == pXLink2->GetTblFollowerTo())
-				{
-					ASSERT(pXLink2->GetTblMasterTo() != pXLink1->GetTblFollowerTo());
-					swap(XLinks[i], XLinks[j]);
-					break;
-				}
-			}
-		while(j < XLinks.size());
+    auto it = adj_list.find(node);
+    if (it == adj_list.end())
+        return true;
 
-//	Remove superfluous links
-	for(i = 0; i < XLinks.size() - 1; i++)
-	{
-		CXLink* pXLink1 = XLinks[i];
-		for(j = i + 1; j < XLinks.size(); j++)
-		{
-			CXLink* pXLink2 = XLinks[j];
-			if(pXLink1->GetTblMasterTo() == pXLink2->GetTblMasterTo())
-			{
-				XLinks.erase(XLinks.begin() + j);
-				j--;
-				continue;
-			}
-		}
-	}
+    auto inserted = visited.emplace(node, false); // mark temporarily
+    if (!inserted.second)
+        return inserted.first->second; // ok if permanent
+
+    CXLink* xlink = nullptr;
+    for (auto v : it->second) 
+    {
+        xlink = v;
+        top_sort_DFS_loop(adj_list, sorted, visited, v->GetTblFollowerTo());
+    }
+    ASSERT(xlink != nullptr);
+
+    inserted.first->second = true; // mark permanently
+
+    sorted.push_front(xlink);
+
+    return true;
+}
+
+bool CTblCopyHelper::CopyReferenceTables(IProgress* pProgress, bool bClear /*= false*/)
+{
+    std::map<CTableId, std::deque<CXLink*>> adj_list;
+
+    //	Get reference links
+    for (const auto& pXLink : m_XLinks)
+    {
+        if (pXLink->IsByReference())
+        {
+            adj_list[pXLink->GetTblMasterTo()].push_back(pXLink.get());
+        }
+    }
+
+    CXLinkPtrArray XLinks;
+    std::map<CTableId, bool> visited;
+
+    for (const auto& v : adj_list)
+    {
+        if (visited.find(v.first) == visited.end())
+        {
+            if (!top_sort_DFS_loop(adj_list, XLinks, visited, v.first))
+                return false;
+        }
+    }
 
 	if(pProgress)
 	{
@@ -989,7 +987,7 @@ BOOL CTblCopyHelper::CopyReferenceTables(IProgress* pProgress, bool bClear /*= f
 	}
 
 //	Replicate data
-	for(i = 0; i < XLinks.size(); i++)
+	for(size_t i = 0; i < XLinks.size(); i++)
 	{
 		PumpPaintMsg();
 
@@ -1034,8 +1032,17 @@ BOOL CTblCopyHelper::CopyReferenceTables(IProgress* pProgress, bool bClear /*= f
 		if(!(i % REFERENCE_PROGRESS_REDUCING_COEFF))
 			ShowProgress();
 	}
-	return TRUE;
+	return true;
 }
+
+void CTblCopyHelper::DoClear(const CXLinkPtrArray& links)
+{
+    for (auto it(links.rbegin()), itEnd(links.rend()); it != itEnd; ++it)
+    {
+        (*it)->DeleteRecords(0);
+    }
+}
+
 
 void CTblCopyHelper::ArrangeOrphanXLinks(bool bInitial)
 {
@@ -1073,7 +1080,7 @@ void CTblCopyHelper::ArrangeOrphanXLinks(bool bInitial)
 	}
 }
 
-BOOL CTblCopyHelper::BeforeCopyTables(IProgress* pProgressBar)
+bool CTblCopyHelper::BeforeCopyTables(IProgress* pProgressBar)
 {
 	TRACE(_T("Replication initial tables list:\n"));
 
@@ -1142,7 +1149,7 @@ BOOL CTblCopyHelper::BeforeCopyTables(IProgress* pProgressBar)
 		pProgressBar->SetPos(0);
 	}
 
-	return TRUE;
+	return true;
 }
 
 ////////////////////////////////

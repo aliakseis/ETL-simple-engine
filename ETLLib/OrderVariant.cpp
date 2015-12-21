@@ -397,7 +397,7 @@ BOOL COrderVariant::DeleteRecord()
 
 void COrderVariant::DeleteRecords(DWORD dwFilterType)
 { 
-	ASSERT((m_dwFlags & OV_KIND) != OV_XLINK);
+	ASSERT((m_dwFlags & OV_KIND) != OV_XLINK || IsByReference());
 	GetOrderVariantBase()->DeleteRecords(dwFilterType); 
 }
 

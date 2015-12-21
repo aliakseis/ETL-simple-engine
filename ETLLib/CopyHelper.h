@@ -95,20 +95,13 @@ protected:
 	void AddXLink(std::unique_ptr<CXLink> pL);
 
 
-	BOOL CopyReferenceTables(IProgress* pProgress, bool bClear = false);
-	void DoClear(const CXLinkPtrArray& ) {}
+	bool CopyReferenceTables(IProgress* pProgress, bool bClear = false);
+    void DoClear(const CXLinkPtrArray&);
 	void ArrangeOrphanXLinks(bool bInitial);
 
-	virtual BOOL BeforeCopyTables(IProgress* pProgress);
-	BOOL DoCopyTables(IProgress* pProgress);
-	virtual BOOL AfterCopyTables()			{ return TRUE; }
-	int EnumReferenceTables(CXLinkPtrArray* pArray = NULL);
-	int GetNumReferenceTables()
-		{
-			if(-1 == m_nReferenceTables)
-				m_nReferenceTables = EnumReferenceTables();
-			return m_nReferenceTables;
-		}
+	virtual bool BeforeCopyTables(IProgress* pProgress);
+	bool DoCopyTables(IProgress* pProgress);
+	virtual bool AfterCopyTables()			{ return true; }
 	EHandleResult HandleEntry(COrderEntry* pEntry);
 
 	IProgress* GetProgressCtrl() { return m_pProgress; }
@@ -151,7 +144,7 @@ public:
 	void SetDataSources(std::shared_ptr<CTableHolder> pHolderTo, 
         std::shared_ptr<CTableHolder> pHolderFrom);
 
-	BOOL CopyTables(IProgress* pProgressBar = NULL);
+	bool CopyTables(IProgress* pProgressBar = NULL);
 	virtual int GetCount() { return m_WorkFlowEntries.size() + m_Links.size(); }
 
 	CTableHolder* GetHolderTo()   

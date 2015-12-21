@@ -593,7 +593,7 @@ bool CETLdemoDlg::DoTransform()
 		}
 
 		CopyHelper.Init(iterCustomers, fltCustomers,
-			iterEmployees, fltEmployees, m_bCustomersOrEmployeesOrders);
+			iterEmployees, fltEmployees, !!m_bCustomersOrEmployeesOrders);
 
 		CopyHelper.SetFastLoad(!!m_bFastLoad);
 

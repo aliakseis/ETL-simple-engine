@@ -11,21 +11,23 @@
 
 class CDemoCopyHelper : public CTblCopyHelper  
 {
-	BOOL m_bCustomersOrEmployeesOrders;
+	bool m_bCustomersOrEmployeesOrders;
+    bool m_doCopyReferenceTables;
 
 public:
 	CDemoCopyHelper();
 	virtual ~CDemoCopyHelper();
 
 	void Init(const CCopyIterator& iterCustomers, DWORD fltCustomers,
-		const CCopyIterator& iterEmployees, DWORD fltEmployees, BOOL bCustomersOrEmployeesOrders);
+		const CCopyIterator& iterEmployees, DWORD fltEmployees, bool bCustomersOrEmployeesOrders);
 
-	BOOL IsCustomersOrEmployeesOrders() const
+	bool IsCustomersOrEmployeesOrders() const
 	{
 		return m_bCustomersOrEmployeesOrders;
 
 	}
 protected:
+    bool BeforeCopyTables(IProgress* pProgress) override;
 	UIChoiceKind AskChoice(COrderVariant* pLink);
 };
 
