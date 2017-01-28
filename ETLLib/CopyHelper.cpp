@@ -63,7 +63,7 @@ It can be also used for data transformation.
 #include "TableHolder.h"
 #include "DBTable.h"
 
-#include <google/dense_hash_set>
+#include <sparsehash/dense_hash_set>
 
 
 using std::swap;
@@ -410,7 +410,7 @@ COrderLink* CTblCopyHelper::GetSelfLink(CTableId pTblTo)
 	return pSelfLink;
 }
 
-class CIdSet : public GOOGLE_NAMESPACE::dense_hash_set<Identity>
+class CIdSet : public google::dense_hash_set<Identity>
 {
 public:
 	CIdSet()

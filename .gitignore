@@ -218,3 +218,4 @@ pip-log.txt
 out/
 
 *.VC.opendb
+ETLdemo/ETLdemo.VC.db

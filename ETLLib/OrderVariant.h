@@ -27,12 +27,12 @@ class CDBAttrubuteDesc;
 
 #include <memory>
 
-#include <google/dense_hash_map>
+#include <sparsehash/dense_hash_map>
 
 #pragma warning(disable:4097)
 
 
-class CMapIdentities : public GOOGLE_NAMESPACE::dense_hash_map<Identity, Identity>
+class CMapIdentities : public google::dense_hash_map<Identity, Identity>
 {
 public:
 	CMapIdentities()

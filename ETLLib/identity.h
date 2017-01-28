@@ -137,5 +137,20 @@ public:
 
 }
 
+// custom specialization of std::hash can be injected in namespace std
+namespace std
+{
+
+template<> struct hash<Identity>
+{
+    typedef Identity argument_type;
+    typedef std::size_t result_type;
+    result_type operator()(argument_type const& key) const
+    {
+        return key.GetHashKey();
+    }
+};
+
+}
 #endif// identity_h_
 
