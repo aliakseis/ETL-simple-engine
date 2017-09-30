@@ -1,0 +1,33 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ETLLib", "ETLLib\ETLLib.vcxproj", "{35943923-E841-459B-A8AD-16B91437E0C8}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ETLdemo", "ETLdemo\ETLdemo.vcxproj", "{BCCD2DE0-5DB8-43AD-9961-CB823161AEAC}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{35943923-E841-459B-A8AD-16B91437E0C8}.Debug|x64.ActiveCfg = Debug|Win32
+		{35943923-E841-459B-A8AD-16B91437E0C8}.Debug|x86.ActiveCfg = Debug|Win32
+		{35943923-E841-459B-A8AD-16B91437E0C8}.Debug|x86.Build.0 = Debug|Win32
+		{35943923-E841-459B-A8AD-16B91437E0C8}.Release|x64.ActiveCfg = Release|Win32
+		{35943923-E841-459B-A8AD-16B91437E0C8}.Release|x86.ActiveCfg = Debug|Win32
+		{35943923-E841-459B-A8AD-16B91437E0C8}.Release|x86.Build.0 = Debug|Win32
+		{BCCD2DE0-5DB8-43AD-9961-CB823161AEAC}.Debug|x64.ActiveCfg = Debug|Win32
+		{BCCD2DE0-5DB8-43AD-9961-CB823161AEAC}.Debug|x86.ActiveCfg = Debug|Win32
+		{BCCD2DE0-5DB8-43AD-9961-CB823161AEAC}.Debug|x86.Build.0 = Debug|Win32
+		{BCCD2DE0-5DB8-43AD-9961-CB823161AEAC}.Release|x64.ActiveCfg = Release|Win32
+		{BCCD2DE0-5DB8-43AD-9961-CB823161AEAC}.Release|x86.ActiveCfg = Debug|Win32
+		{BCCD2DE0-5DB8-43AD-9961-CB823161AEAC}.Release|x86.Build.0 = Debug|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

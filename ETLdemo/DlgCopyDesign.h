@@ -12,7 +12,7 @@ class CDlgCopyDesign : public CDialog
 {
 // Construction
 public:
-	CDlgCopyDesign(CWnd* pParent = NULL);   // standard constructor
+	explicit CDlgCopyDesign(CWnd* pParent = NULL);   // standard constructor
 
 // Dialog Data
 	//{{AFX_DATA(CDlgCopyDesign)

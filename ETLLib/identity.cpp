@@ -6,7 +6,7 @@
 class get_visitor : public boost::static_visitor<void>
 {
 public:
-	get_visitor(_variant_t& val) : m_val(val) {}
+	explicit get_visitor(_variant_t& val) : m_val(val) {}
 
 	void operator()(const NotDefinedValue&) const
 	{

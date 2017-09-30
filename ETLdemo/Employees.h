@@ -19,7 +19,7 @@ public:
 
 	static LPCWSTR g_szTableName;
 
-	CEmployees(CTableHolder* pConn);
+    explicit CEmployees(CTableHolder* pConn);
 	virtual ~CEmployees();
 
 };

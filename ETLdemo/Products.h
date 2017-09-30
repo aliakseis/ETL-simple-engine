@@ -20,7 +20,7 @@ public:
 
 	static LPCWSTR g_szTableName;
 
-	CProducts(CTableHolder* pConn);
+	explicit CProducts(CTableHolder* pConn);
 	virtual ~CProducts();
 
 };

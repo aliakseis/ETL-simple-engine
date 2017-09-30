@@ -153,20 +153,17 @@ void CTblCopyHelper::TransferData(const C& rContext, COrderVariant* pVar, int nC
 
 
 CTblCopyHelper::CTblCopyHelper()
+    : m_pHolderTo(NULL)
+    , m_pHolderFrom(NULL)
+    , m_pProgress(NULL)
+    , m_nReferenceTables(-1)
+    , m_nPass(0)
+    , m_dwCopyFlags(0)
+    , m_eSameDBases(eNotDef)
+    , m_bLazyObjectBinding(true)
+    , m_nProgressDelay(0)
+    , m_bFastLoad(false)
 {
-	m_pHolderTo	  = NULL;
-	m_pHolderFrom = NULL;
-	m_pProgress	  = NULL;
-	m_nReferenceTables = -1;
-	m_nPass = 0;
-	m_dwCopyFlags = 0;
-	m_eSameDBases = eNotDef;
-
-	m_bLazyObjectBinding = true;
-
-	m_nProgressDelay = 0;
-
-	m_bFastLoad = false;
 }
 
 CTblCopyHelper::~CTblCopyHelper()
@@ -196,8 +193,8 @@ void CTblCopyHelper::SetDataSources(std::shared_ptr<CTableHolder> pHolderTo,
 	FreeArrays();
 	ASSERT(pHolderTo != nullptr);
     ASSERT(pHolderFrom != nullptr);
-	m_pHolderTo	  = pHolderTo;
-	m_pHolderFrom = pHolderFrom;
+	m_pHolderTo	  = std::move(pHolderTo);
+	m_pHolderFrom = std::move(pHolderFrom);
 }
 
 
@@ -478,12 +475,12 @@ struct CTblCopyHelper::CDownstairsContext
 	CMapIdentities* m_pSubstParentId;
 	bool m_bConvert;
 
-	CDownstairsContext()
-	{
-		m_lPKTo = ID_NOT_DEF;
-		m_pSubstParentId = NULL;
-		m_bConvert = false;
-	}
+    CDownstairsContext()
+        : m_lPKTo(ID_NOT_DEF)
+        , m_pSubstParentId(NULL)
+        , m_bConvert(false)
+    {
+    }
 };
 
 	bool CTblCopyHelper::DoConvertAndFilter(COrderVariant* pVar, CMapIdentities* pSubstId,

@@ -14,7 +14,7 @@ class CSuppliers : public CDBTable
 public:
 	static LPCWSTR g_szTableName;
 	
-	CSuppliers(CTableHolder* pConn);
+    explicit CSuppliers(CTableHolder* pConn);
 	virtual ~CSuppliers();
 
 };

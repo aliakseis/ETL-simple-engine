@@ -13,7 +13,7 @@ class CETLdemoDlg : public CDialog
 {
 // Construction
 public:
-	CETLdemoDlg(CWnd* pParent = NULL);	// standard constructor
+	explicit CETLdemoDlg(CWnd* pParent = NULL);	// standard constructor
 
 // Dialog Data
 	//{{AFX_DATA(CETLdemoDlg)

@@ -14,7 +14,7 @@ class CCustomers : public CDBTable
 public:
 	static LPCWSTR g_szTableName;
 
-	CCustomers(CTableHolder* pConn);
+	explicit CCustomers(CTableHolder* pConn);
 	virtual ~CCustomers();
 
 };

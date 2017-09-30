@@ -21,23 +21,6 @@ IL, 14, 15, 16, 17, 18, 19, 20, /* 60 */
 21, 22, 23, 24, 25, 26, 27, 28, /* 68 */
 29, 30, 31, 32, 33, 34, 35, 36, /* 70 */
 37, 38, 39, IL, IL, IL, IL, IL, /* 78 */
-
-//IL, IL, IL, IL, IL, IL, IL, IL, /* 80 */
-//IL, IL, IL, IL, IL, IL, IL, IL, /* 88 */
-//IL, IL, IL, IL, IL, IL, IL, IL, /* 90 */
-//IL, IL, IL, IL, IL, IL, IL, IL, /* 98 */
-//IL, IL, IL, IL, IL, IL, IL, IL, /* A0 */
-//IL, IL, IL, IL, IL, IL, IL, IL, /* A8 */
-//IL, IL, IL, IL, IL, IL, IL, IL, /* B0 */
-//IL, IL, IL, IL, IL, IL, IL, IL, /* B8 */
-//IL, IL, IL, IL, IL, IL, IL, IL, /* C0 */
-//IL, IL, IL, IL, IL, IL, IL, IL, /* C8 */
-//IL, IL, IL, IL, IL, IL, IL, IL, /* D0 */
-//IL, IL, IL, IL, IL, IL, IL, IL, /* D8 */
-//IL, IL, IL, IL, IL, IL, IL, IL, /* E0 */
-//IL, IL, IL, IL, IL, IL, IL, IL, /* E8 */
-//IL, IL, IL, IL, IL, IL, IL, IL, /* F0 */
-//IL, IL, IL, IL, IL, IL, IL, IL  /* F8 */
 };
 
 const int weights[3] = { 1600, 40, 1 };
@@ -54,26 +37,12 @@ int ascii_to_radix40(Radix40 *radix40_data, const RADIX40_CHAR *ascii_data, int 
 /* only max_chars will be converted, and the return value will be S_ILLEGAL. */
 /* If no error is detected, the return value will be S_OKAY. */
 {
-//	int i;
-	unsigned char j;
-//	int ascii_length;
 	int result;
-//	int words_to_convert;
 	int words_to_clear;
 	int cycle;
 	unsigned current_word_index;
 
 	result = S_OKAY;
-//	ascii_length = strlen(ascii_data);
-//	if (ascii_length > max_chars)
-//		{
-//		ascii_length = max_chars;
-//		result = S_ILLEGAL;
-//		}
-
-//	words_to_convert = ascii_length / 3;
-//	if (ascii_length % 3 != 0)
-//		words_to_convert ++;
 
 	words_to_clear = max_chars / 3;
 	if (max_chars % 3 != 0)
@@ -93,7 +62,7 @@ int ascii_to_radix40(Radix40 *radix40_data, const RADIX40_CHAR *ascii_data, int 
 			}
 		if (cycle == 0)
 			current_word_index ++;
-		j = (*ptr & 0xFF80)? IL : lookup_chars[*ptr];
+        unsigned char j = (*ptr & 0xFF80)? IL : lookup_chars[*ptr];
 		if (j & ILLEGAL)
 			{
 			j = HYPHEN ; /* make it a hyphen */
@@ -112,12 +81,10 @@ int radix40_to_ascii(RADIX40_CHAR *ascii_data, const Radix40 *radix40_data,int m
 {
 	int i;
 	int ascii_length;
-//	int new_ascii_length;
 	int words_to_convert;
 	int cycle;
 	unsigned current_word_index;
 	unsigned current_word = 0;
-	unsigned current_char;
 
 	ascii_length = max_chars;
 
@@ -136,14 +103,12 @@ int radix40_to_ascii(RADIX40_CHAR *ascii_data, const Radix40 *radix40_data,int m
 			current_word_index ++;
 			current_word = radix40_data[current_word_index];
 			}
-		current_char = current_word / weights[cycle];
+        unsigned current_char = current_word / weights[cycle];
 		current_word -= current_char * weights[cycle];
 		ascii_data[i] = legal_chars[current_char];
 		cycle = (cycle + 1) % 3;
 		}
 
-	//new_ascii_length = strlen((char*)ascii_data);
-	//for (i = new_ascii_length - 1; i >= 0; i --)
 	while (--i >= 0)
 		{
 		if (ascii_data[i] != ' ')

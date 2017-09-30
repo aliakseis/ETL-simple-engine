@@ -79,12 +79,12 @@ protected:
 		 const wstring*> Variant;
 	Variant m_val;
 
-	Identity(const NullValue&);
+    explicit Identity(const NullValue&);
 
 public:
 	Identity();
 
-	Identity(long val);
+    explicit Identity(long val);
 
 	void Set(const _variant_t& val, CIdentityShared& context);
 

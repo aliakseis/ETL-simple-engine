@@ -21,7 +21,7 @@ public:
 
 	static LPCWSTR g_szTableName;
 
-	COrders(CTableHolder* pConn);
+    explicit COrders(CTableHolder* pConn);
 	virtual ~COrders();
 
 };

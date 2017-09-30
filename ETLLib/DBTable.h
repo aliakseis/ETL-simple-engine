@@ -43,7 +43,7 @@ struct AtomDesc
 class ETLLIB_EXPORT CDBTable  
 {
 public:
-	CDBTable(CTableHolder* pHolder);
+    explicit CDBTable(CTableHolder* pHolder);
 	virtual ~CDBTable();
 
 	LPCWSTR GetTableName() const { return m_pstrTableName; }

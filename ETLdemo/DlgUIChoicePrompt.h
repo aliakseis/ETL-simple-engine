@@ -12,7 +12,7 @@ class CDlgUIChoicePrompt : public CDialog
 {
 // Construction
 public:
-	CDlgUIChoicePrompt(CWnd* pParent = NULL);   // standard constructor
+	explicit CDlgUIChoicePrompt(CWnd* pParent = NULL);   // standard constructor
 
 // Dialog Data
 	//{{AFX_DATA(CDlgUIChoicePrompt)

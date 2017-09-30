@@ -48,15 +48,12 @@ public:
 struct CSubstRec
 {
 	Identity m_lKeyTo, m_lKeyFrom;
-	CSubstRec() 
+	CSubstRec() : m_lKeyTo(ID_NOT_DEF), m_lKeyFrom(ID_NOT_DEF)
 	{
-		m_lKeyTo = ID_NOT_DEF;
-		m_lKeyFrom = ID_NOT_DEF;
 	}
 	CSubstRec(Identity lKeyTo, Identity lKeyFrom)
+        : m_lKeyTo(lKeyTo), m_lKeyFrom(lKeyFrom)
 	{
-		m_lKeyTo = lKeyTo;
-		m_lKeyFrom = lKeyFrom;
 	}
 };
 
@@ -93,15 +90,15 @@ class ETLLIB_EXPORT CCopyIterator
 public:
 	CCopyIterator()	{ m_ciKind  = ciNotDef; }
 	CCopyIterator(const CCopyIterator& other);
-	CCopyIterator(const CSubstRecArrayPtr& parrSubstRec)
+    explicit CCopyIterator(const CSubstRecArrayPtr& parrSubstRec)
 	{
 		SetData(parrSubstRec);
 	}
-	CCopyIterator(const std::deque<Identity>* parrId)
+    explicit CCopyIterator(const std::deque<Identity>* parrId)
 	{
 		SetData(parrId);
 	}
-	CCopyIterator(Identity lPK)
+    explicit CCopyIterator(Identity lPK)
 	{
 		SetData(lPK);
 	}
@@ -195,9 +192,8 @@ public:
 		m_pfnCreator = NULL; 
 		m_pszTableName = NULL; 
 	}
-	CTableId(TableObjCreator pfnCreator,
-				LPCWSTR pszTableName
-				)
+    explicit CTableId(TableObjCreator pfnCreator,
+				LPCWSTR pszTableName)
 	: m_pfnCreator(pfnCreator)
 	, m_pszTableName(pszTableName)
 	{
@@ -263,7 +259,7 @@ class CDataHandlerKey
 {
 public:
 	CDataHandlerKey() {}
-	CDataHandlerKey(const CTableId& id) : m_id(id) {}
+    explicit CDataHandlerKey(const CTableId& id) : m_id(id) {}
 	CTableId	GetCopyTableId() const { return m_id; }
 
 protected:
@@ -455,7 +451,7 @@ public:
 	{
 		m_dwFlags = 0; 
 	}
-	COrderVariantKey(const CTableId& id)
+    explicit COrderVariantKey(const CTableId& id)
 	: m_idFollower(id)
 	{
 		m_dwFlags = 0; 
@@ -655,7 +651,7 @@ template<class T> class CTypedOrderVarDesc : public CTypedOrderVariant<T>
 template<class T> class CTypedEntryLink : public COrderVariant
 {
 public:
-	CTypedEntryLink( CCopyIterator		CopyIterator,
+	CTypedEntryLink(const CCopyIterator& CopyIterator,
 							const CTableId&	idFollower,
 							size_t	nFieldOffset,
 							DWORD	dwFilterType = fltAutoNumber | fltPrimaryKey)

@@ -6,7 +6,7 @@ class CDataSourceLocator : public COleDispatchDriver
 {
 public:
 	CDataSourceLocator() {}		// Calls COleDispatchDriver default constructor
-	CDataSourceLocator(LPDISPATCH pDispatch) : COleDispatchDriver(pDispatch) {}
+	explicit CDataSourceLocator(LPDISPATCH pDispatch) : COleDispatchDriver(pDispatch) {}
 	CDataSourceLocator(const CDataSourceLocator& dispatchSrc) : COleDispatchDriver(dispatchSrc) {}
 
 // Attributes

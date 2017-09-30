@@ -14,7 +14,7 @@ class CCategories : public CDBTable
 public:
 	static LPCWSTR g_szTableName;
 
-	CCategories(CTableHolder* pConn);
+	explicit CCategories(CTableHolder* pConn);
 	virtual ~CCategories();
 
 };

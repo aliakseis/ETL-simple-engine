@@ -57,7 +57,7 @@ const TCHAR g_szEmployees[] = _T("Employees");
 class CProgressBarAdapter : public IProgress
 {
 public:
-	CProgressBarAdapter(CProgressCtrl& rProgress)
+    explicit CProgressBarAdapter(CProgressCtrl& rProgress)
 		: m_progress(rProgress) {}
 
 	void SetRange(short nLower, short nUpper) { m_progress.SetRange(nLower, nUpper); }
@@ -494,7 +494,6 @@ void CETLdemoDlg::OnBnClickedTest()
 
 bool CETLdemoDlg::DoTransform()
 {
-	int i;
 	UpdateData();
 
 	m_connectStringFrom.TrimRight(); m_connectStringFrom.TrimLeft();
@@ -552,7 +551,7 @@ bool CETLdemoDlg::DoTransform()
 		case MODE_CUSTOMERS_SELECT:
 			fltCustomers = fltPrimaryKey;
 
-			for (i = m_listCustomers.GetCount(); i--; )
+			for (int i = m_listCustomers.GetCount(); i--; )
 				if (m_listCustomers.GetCheck(i))
 				{
 					DWORD id = m_listCustomers.GetItemData(i);
@@ -579,10 +578,10 @@ bool CETLdemoDlg::DoTransform()
 		case MODE_EMPLOYEES_SELECT:
 			fltEmployees = fltPrimaryKey;
 
-			for (i = m_listEmployees.GetCount(); i--; )
+			for (int i = m_listEmployees.GetCount(); i--; )
 				if (m_listEmployees.GetCheck(i))
 				{
-					arrEmployees.push_back(m_listEmployees.GetItemData(i));
+					arrEmployees.push_back(Identity(m_listEmployees.GetItemData(i)));
 				}
 
 			iterEmployees.SetData(&arrEmployees);

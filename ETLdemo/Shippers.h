@@ -14,7 +14,7 @@ class CShippers : public CDBTable
 public:
 	static LPCWSTR g_szTableName;
 
-	CShippers(CTableHolder* pConn);
+    explicit CShippers(CTableHolder* pConn);
 	virtual ~CShippers();
 
 };
