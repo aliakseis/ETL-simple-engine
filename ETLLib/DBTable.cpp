@@ -718,7 +718,7 @@ bool CDBTable::FastInsert()
 				DBTYPE columnType = 0;
 				VERIFY(m_cda.GetColumnType(ulColumn, &columnType));
 
-				ULONG ulColumnOffset = ulColumn;
+				DBORDINAL ulColumnOffset = ulColumn;
 				VERIFY(m_cda.TranslateColumnNo(ulColumnOffset));
 				void* pDataBuffer = m_cda._GetDataPtr(ulColumnOffset);
 
